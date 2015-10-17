@@ -13,5 +13,5 @@ Specify the following in build.gradle:
     }
 
 Run `gradle -q nimbleUpload` to upload your APK to NimbleDroid  
-Run `gradle -q nimbleProfile` to retrieve profiling information
+Run `gradle -q nimbleProfile` to retrieve profiling information  
 Run `gradle -q nimbleApps` to retrieve information about your apps
