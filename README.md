@@ -12,6 +12,6 @@ Specify the following in build.gradle:
         apkPath "$buildDir/path/to/your-release.apk"
     }
 
-Run `gradle -q nimbleUpload` to upload your APK to NimbleDroid  
-Run `gradle -q nimbleProfile` to retrieve profiling information  
-Run `gradle -q nimbleApps` to retrieve information about your apps
+Run `gradle -q nimbleUpload` to upload your APK to NimbleDroid.  
+Run `gradle -q nimbleProfile` to retrieve profiling information.  
+Run `gradle -q nimbleApps` to retrieve information about your apps.
