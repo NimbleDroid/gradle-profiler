@@ -39,15 +39,13 @@ class ProfilerPlugin implements Plugin<Project> {
         project.task('nimbleUpload') << {
             http.auth.basic(project.nimbledroid.apiKey, "")
             if(project.nimbledroid.apkPath == null) {
-                String releaseApk = null
+                String apkPath = null
                 project.android.applicationVariants.all { variant ->
-                    if((variant.name).equals("release")) {
-                        variant.outputs.each { output ->
-                            releaseApk = output.outputFile
-                        }
+                    variant.outputs.each { output ->
+                        apkPath = output.outputFile
                     }
                 }
-                project.nimbledroid.apkPath = releaseApk
+                project.nimbledroid.apkPath = apkPath
             }
             def apk = project.file(project.nimbledroid.apkPath)
             http.request(POST, JSON) { req ->
@@ -69,7 +67,7 @@ class ProfilerPlugin implements Plugin<Project> {
                 }
                 req.entity = entity
                 response.success = { resp, reader ->
-                    println reader
+                    println "Profile URL: ${reader.profile_url}"
                     nimbleProperties.write(reader.profile_url)
                 }
             }
