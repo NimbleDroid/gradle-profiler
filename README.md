@@ -4,7 +4,22 @@ A gradle plugin that interfaces with NimbleDroid to automate app profiling.
 
 ## Using Profiler
 
-Specify the following in build.gradle:
+Build script snippet:
+
+    buildscript {
+        repositories {
+            maven {
+                url "https://raw.githubusercontent.com/Tubebaum/maven-repo/master/"
+            }
+        }
+        dependencies {
+            classpath 'com.nimbledroid:gradle-profiler:1.0'
+        }
+    }
+
+    apply plugin: 'com.nimbledroid.profiler'
+
+Specify the following in build.gradle to configure the plugin:
 
     nimbledroid {
         apiKey 'NimbleDroid API key'
