@@ -79,10 +79,16 @@ class ProfilerPlugin implements Plugin<Project> {
             }
             http.auth.basic(project.nimbledroid.apiKey, "")
             Boolean done = false
-            String latestProfile = new String(nimbleProperties.readBytes())
+            String latestProfile = new String(nimbleProperties.readBytes()).trim()
+            String uriPath = "/api/v1$latestProfile"
+            try {
+                URL url = new URL(latestProfile)
+                uriPath = url.getPath()
+            } catch(MalformedURLException e) {
+            }
             while(!done) {
                 http.request(GET) { req ->
-                    uri.path = "/api/v1$latestProfile"
+                    uri.path = uriPath
                     response.success = { resp, reader ->
                         switch(reader.status) {
                             case "Profiled":
