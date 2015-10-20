@@ -11,7 +11,6 @@ import org.gradle.api.Project
 
 class ProfilerPluginExtension {
     String apiKey
-    String password
     String apkPath
 }
 
@@ -26,7 +25,7 @@ class ProfilerPlugin implements Plugin<Project> {
         nimbleProperties = project.file("${project.rootDir}/nimbledroid.properties")
 
         project.task('nimbleApps') << {
-            http.auth.basic(project.nimbledroid.apiKey, project.nimbledroid.password)
+            http.auth.basic(project.nimbledroid.apiKey, "")
             http.request(GET) { req ->
                 uri.path = '/api/v1/apps'
                 response.success = { resp, reader ->
@@ -36,7 +35,7 @@ class ProfilerPlugin implements Plugin<Project> {
         }
 
         project.task('nimbleUpload') << {
-            http.auth.basic(project.nimbledroid.apiKey, project.nimbledroid.password)
+            http.auth.basic(project.nimbledroid.apiKey, "")
             def apk = project.file(project.nimbledroid.apkPath)
             http.request(POST, JSON) { req ->
                 uri.path = '/api/v1/apks'
@@ -55,7 +54,7 @@ class ProfilerPlugin implements Plugin<Project> {
             if(!nimbleProperties.exists()) {
                 project.nimbleUpload.execute()
             }
-            http.auth.basic(project.nimbledroid.apiKey, project.nimbledroid.password)
+            http.auth.basic(project.nimbledroid.apiKey, "")
             Boolean done = false
             String latestProfile = new String(nimbleProperties.readBytes())
             while(!done) {

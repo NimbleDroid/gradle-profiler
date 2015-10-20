@@ -8,7 +8,6 @@ Specify the following in build.gradle:
 
     nimbledroid {
         apiKey 'NimbleDroid API key'
-        password 'NimbleDroid password'
         apkPath "$buildDir/path/to/your-release.apk"
     }
 
