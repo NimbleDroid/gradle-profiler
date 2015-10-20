@@ -23,6 +23,13 @@ Specify the following in build.gradle to configure the plugin:
 
     nimbledroid {
         apiKey 'NimbleDroid API key'
+    }
+
+By default, the plugin uses the last application variant in your output
+directory. If you would like to use a different variant, specify the following:
+
+    nimbledroid {
+        apiKey 'NimbleDroid API key'
         apkPath "$buildDir/path/to/your-release.apk"
     }
 
