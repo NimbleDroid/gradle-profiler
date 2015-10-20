@@ -4,8 +4,10 @@ import groovyx.net.http.HTTPBuilder
 import static groovyx.net.http.ContentType.JSON
 import static groovyx.net.http.Method.GET
 import static groovyx.net.http.Method.POST
+import static org.apache.http.entity.ContentType.TEXT_PLAIN
 import org.apache.http.entity.mime.MultipartEntity
 import org.apache.http.entity.mime.content.FileBody
+import org.apache.http.entity.mime.content.StringBody
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -36,10 +38,10 @@ class ProfilerPlugin implements Plugin<Project> {
 
         project.task('nimbleUpload') << {
             http.auth.basic(project.nimbledroid.apiKey, "")
-            if (project.nimbledroid.apkPath == null) {
+            if(project.nimbledroid.apkPath == null) {
                 String releaseApk = null
                 project.android.applicationVariants.all { variant ->
-                    if ((variant.name).equals("release")) {
+                    if((variant.name).equals("release")) {
                         variant.outputs.each { output ->
                             releaseApk = output.outputFile
                         }
@@ -52,7 +54,19 @@ class ProfilerPlugin implements Plugin<Project> {
                 uri.path = '/api/v1/apks'
                 requestContentType = 'multipart/form-data'
                 MultipartEntity entity = new MultipartEntity()
-                entity.addPart("apk", new FileBody(apk))
+                entity.addPart('apk', new FileBody(apk))
+                try {
+                    String commitHash = "git rev-parse HEAD".execute().text.trim()
+                    entity.addPart('commit', new StringBody(commitHash, TEXT_PLAIN));
+                } catch(IOException e) {
+                    println e.getMessage()
+                }
+                if(project.hasProperty('branch')) {
+                    entity.addPart('branch', new StringBody("${project.branch}", TEXT_PLAIN));
+                }
+                if(project.hasProperty('flavor')) {
+                    entity.addPart('flavor', new StringBody("${project.flavor}", TEXT_PLAIN));
+                }
                 req.entity = entity
                 response.success = { resp, reader ->
                     println reader
@@ -74,20 +88,11 @@ class ProfilerPlugin implements Plugin<Project> {
                     response.success = { resp, reader ->
                         switch(reader.status) {
                             case "Profiled":
-                                println reader
-                                def num_new_issues = reader.scenarios[0].num_new_issues
-                                switch(num_new_issues) {
-                                    case 0:
-                                        println "Passed, no new issues"
-                                        break
-                                    default:
-                                        println "Failed, $num_new_issues new issues"
-                                        break
-                                }
+                                println reader.console_message
                                 done = true
                                 break
                             default:
-                                println reader
+                                println reader.console_message
                                 break
                         }
                     }
