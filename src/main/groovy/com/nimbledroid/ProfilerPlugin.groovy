@@ -36,6 +36,17 @@ class ProfilerPlugin implements Plugin<Project> {
 
         project.task('nimbleUpload') << {
             http.auth.basic(project.nimbledroid.apiKey, "")
+            if (project.nimbledroid.apkPath == null) {
+                String releaseApk = null
+                project.android.applicationVariants.all { variant ->
+                    if ((variant.name).equals("release")) {
+                        variant.outputs.each { output ->
+                            releaseApk = output.outputFile
+                        }
+                    }
+                }
+                project.nimbledroid.apkPath = releaseApk
+            }
             def apk = project.file(project.nimbledroid.apkPath)
             http.request(POST, JSON) { req ->
                 uri.path = '/api/v1/apks'
