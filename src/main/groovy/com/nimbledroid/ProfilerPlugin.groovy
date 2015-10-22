@@ -55,9 +55,10 @@ class ProfilerPlugin implements Plugin<Project> {
                 entity.addPart('apk', new FileBody(apk))
                 try {
                     String commitHash = "git rev-parse HEAD".execute().text.trim()
-                    entity.addPart('commit', new StringBody(commitHash, TEXT_PLAIN));
+                    if(!commitHash.startsWith("fatal") {
+                        entity.addPart('commit', new StringBody(commitHash, TEXT_PLAIN));
+                    }
                 } catch(IOException e) {
-                    println e.getMessage()
                 }
                 if(project.hasProperty('branch')) {
                     entity.addPart('branch', new StringBody("${project.branch}", TEXT_PLAIN));
