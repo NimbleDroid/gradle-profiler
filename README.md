@@ -33,6 +33,5 @@ directory. If you would like to use a different variant, specify the following:
         apkPath "$buildDir/path/to/your-release.apk"
     }
 
-Run `gradle -q nimbleUpload` to upload your APK to NimbleDroid.  
-Run `gradle -q nimbleProfile` to retrieve profiling information.  
-Run `gradle -q nimbleApps` to retrieve information about your apps.
+Run `gradle ndUpload` to upload your APK to NimbleDroid.  
+Run `gradle ndGetProfile` to retrieve profiling information.
