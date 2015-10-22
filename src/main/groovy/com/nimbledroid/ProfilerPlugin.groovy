@@ -26,7 +26,7 @@ class ProfilerPlugin implements Plugin<Project> {
         http = new HTTPBuilder('https://staging.nimbledroid.com')
         nimbleProperties = project.file("${project.rootDir}/nimbledroid.properties")
 
-        project.task('nimbleUpload') << {
+        project.task('ndUpload') << {
             http.auth.basic(project.nimbledroid.apiKey, "")
             if(project.nimbledroid.apkPath == null) {
                 String apkPath = null
@@ -64,7 +64,7 @@ class ProfilerPlugin implements Plugin<Project> {
             }
         }
 
-        project.task('nimbleProfile') << {
+        project.task('ndGetProfile') << {
             if(!nimbleProperties.exists()) {
                 project.nimbleUpload.execute()
             }
