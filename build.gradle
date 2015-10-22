@@ -1,11 +1,16 @@
+plugins {
+  id "com.gradle.plugin-publish" version "0.9.1"
+}
+
 apply plugin: 'groovy'
 apply plugin: 'maven'
 
-group = 'com.nimbledroid'
+group = 'com.nimbledroid.profiler'
 version = '1.0'
 
 repositories {
     mavenCentral()
+    jcenter()
 }
 
 dependencies {
