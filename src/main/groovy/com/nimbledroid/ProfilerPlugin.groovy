@@ -45,7 +45,7 @@ class ProfilerPlugin implements Plugin<Project> {
                 entity.addPart('apk', new FileBody(apk))
                 try {
                     String commitHash = "git rev-parse HEAD".execute().text.trim()
-                    if(!commitHash.startsWith("fatal") {
+                    if(!commitHash.startsWith("fatal")) {
                         entity.addPart('commit', new StringBody(commitHash, TEXT_PLAIN));
                     }
                 } catch(IOException e) {
@@ -66,7 +66,7 @@ class ProfilerPlugin implements Plugin<Project> {
 
         project.task('ndGetProfile') << {
             if(!nimbleProperties.exists()) {
-                project.nimbleUpload.execute()
+                project.ndUpload.execute()
             }
             http.auth.basic(project.nimbledroid.apiKey, "")
             Boolean done = false
@@ -96,6 +96,11 @@ class ProfilerPlugin implements Plugin<Project> {
                     sleep(30000)
                 }
             }
+        }
+
+        project.task('ndProfile') << {
+            project.ndUpload.execute()
+            project.ndGetProfile.execute()
         }
     }
 }
