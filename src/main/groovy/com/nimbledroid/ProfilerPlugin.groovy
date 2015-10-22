@@ -61,6 +61,10 @@ class ProfilerPlugin implements Plugin<Project> {
                     println "Profile URL: ${reader.profile_url}"
                     nimbleProperties.write(reader.profile_url)
                 }
+                response.failure = { resp ->
+                    println 'There was a problem reaching the NimbleDroid service.'
+                    println 'You can contact support@nimbledroid.com if you need assistance.'
+                }
             }
         }
 
@@ -90,6 +94,11 @@ class ProfilerPlugin implements Plugin<Project> {
                                 println reader.console_message
                                 break
                         }
+                    }
+                    response.failure = { resp ->
+                        println 'There was a problem parsing the profile response.'
+                        println 'You can contact support@nimbledroid.com if you need assistance.'
+                        done = true
                     }
                 }
                 if(!done) {
