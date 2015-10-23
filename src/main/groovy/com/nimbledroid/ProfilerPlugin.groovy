@@ -39,14 +39,14 @@ class ProfilerPlugin implements Plugin<Project> {
             http.auth.basic(project.nimbledroid.apiKey, "")
             String apkPath = null
             project.android.applicationVariants.all { variant ->
-                if(variant.name == project.nimbledroid.variant) {
-                    variant.outputs.each { output ->
-                        if(project.nimbledroid.apkName != null) {
-                            if (project.nimbledroid.apkName == output.getOutputFile().getName()) {
-                                apkPath = output.outputFile
-                            }
-                        } else {
-                                apkPath = output.outputFile
+                variant.outputs.each { output ->
+                    if(project.nimbledroid.apkName != null) {
+                        if (project.nimbledroid.apkName == output.getOutputFile().getName()) {
+                            apkPath = output.outputFile
+                        }
+                    } else {
+                        if(variant.name == project.nimbledroid.variant) {
+                            apkPath = output.outputFile
                         }
                     }
                 }
