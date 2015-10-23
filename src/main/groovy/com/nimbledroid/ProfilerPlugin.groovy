@@ -14,7 +14,8 @@ import org.gradle.api.tasks.StopActionException
 
 class ProfilerPluginExtension {
     String apiKey
-    String apkPath
+    String variant = 'release'
+    String apkName
 }
 
 class AppDataExtension {
@@ -36,16 +37,29 @@ class ProfilerPlugin implements Plugin<Project> {
         project.task('ndUpload') << {
             checkKey(project)
             http.auth.basic(project.nimbledroid.apiKey, "")
-            if(project.nimbledroid.apkPath == null) {
-                String apkPath = null
-                project.android.applicationVariants.all { variant ->
+            String apkPath = null
+            project.android.applicationVariants.all { variant ->
+                if(variant.name == project.nimbledroid.variant) {
                     variant.outputs.each { output ->
-                        apkPath = output.outputFile
+                        if(project.nimbledroid.apkName != null) {
+                            if (project.nimbledroid.apkName == output.getOutputFile().getName()) {
+                                apkPath = output.outputFile
+                            }
+                        } else {
+                                apkPath = output.outputFile
+                        }
                     }
                 }
-                project.nimbledroid.apkPath = apkPath
             }
-            def apk = project.file(project.nimbledroid.apkPath)
+            if(apkPath == null) {
+                println "No variant named ${project.nimbledroid.variant}"
+                throw new StopActionException()
+            }
+            File apk = project.file(apkPath)
+            if (!apk.exists()) {
+                println "No apk exists for variant ${project.nimbledroid.variant}"
+                throw new StopActionException()
+            }
             http.request(POST, JSON) { req ->
                 uri.path = '/api/v1/apks'
                 requestContentType = 'multipart/form-data'
