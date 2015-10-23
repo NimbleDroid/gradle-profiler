@@ -85,13 +85,12 @@ class ProfilerPlugin implements Plugin<Project> {
                 http.request(GET) { req ->
                     uri.path = uriPath
                     response.success = { resp, reader ->
+                        println reader.console_message
                         switch(reader.status) {
-                            case "Profiled":
-                                println reader.console_message
+                            case ["Profiled", "Failed"]:
                                 done = true
                                 break
                             default:
-                                println reader.console_message
                                 break
                         }
                     }
