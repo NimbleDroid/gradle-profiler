@@ -10,10 +10,16 @@ import org.apache.http.entity.mime.content.FileBody
 import org.apache.http.entity.mime.content.StringBody
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.tasks.StopActionException
 
 class ProfilerPluginExtension {
     String apiKey
     String apkPath
+}
+
+class AppDataExtension {
+    String username
+    String password
 }
 
 class ProfilerPlugin implements Plugin<Project> {
@@ -22,11 +28,16 @@ class ProfilerPlugin implements Plugin<Project> {
 
     void apply(Project project) {
         project.extensions.create("nimbledroid", ProfilerPluginExtension)
+        project.nimbledroid.extensions.create("appData", AppDataExtension)
 
         http = new HTTPBuilder('https://staging.nimbledroid.com')
         nimbleProperties = project.file("${project.rootDir}/nimbledroid.properties")
 
         project.task('ndUpload') << {
+            if (project.nimbledroid.apiKey == null) {
+                println 'Must set nimbledroid.apiKey'
+                throw new StopActionException()
+            }
             http.auth.basic(project.nimbledroid.apiKey, "")
             if(project.nimbledroid.apkPath == null) {
                 String apkPath = null
@@ -56,6 +67,13 @@ class ProfilerPlugin implements Plugin<Project> {
                 if(project.hasProperty('flavor')) {
                     entity.addPart('flavor', new StringBody("${project.flavor}", TEXT_PLAIN));
                 }
+                if(project.nimbledroid.hasProperty('appData')) {
+                    if (project.nimbledroid.appData.username != null) {
+                        entity.addPart('auto_login', new StringBody("true", TEXT_PLAIN));
+                        entity.addPart('username', new StringBody("{project.nimbledroid.appData.username}", TEXT_PLAIN));
+                        entity.addPart('password', new StringBody("{project.nimbledroid.appData.password}", TEXT_PLAIN));
+                    }
+                }
                 req.entity = entity
                 response.success = { resp, reader ->
                     println "Profile URL: ${reader.profile_url}"
@@ -69,6 +87,10 @@ class ProfilerPlugin implements Plugin<Project> {
         }
 
         project.task('ndGetProfile') << {
+            if (project.nimbledroid.apiKey == null) {
+                println 'Must set nimbledroid.apiKey'
+                throw new StopActionException()
+            }
             if(!nimbleProperties.exists()) {
                 project.ndUpload.execute()
             }
@@ -107,6 +129,10 @@ class ProfilerPlugin implements Plugin<Project> {
         }
 
         project.task('ndProfile') << {
+            if (project.nimbledroid.apiKey == null) {
+                println 'Must set nimbledroid.apiKey'
+                throw new StopActionException()
+            }
             project.ndUpload.execute()
             project.ndGetProfile.execute()
         }
