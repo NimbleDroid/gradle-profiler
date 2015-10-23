@@ -15,7 +15,7 @@ import org.gradle.api.tasks.StopActionException
 class ProfilerPluginExtension {
     String apiKey
     String variant = 'release'
-    String apkName
+    String apkFilename
 }
 
 class AppDataExtension {
@@ -40,8 +40,8 @@ class ProfilerPlugin implements Plugin<Project> {
             String apkPath = null
             project.android.applicationVariants.all { variant ->
                 variant.outputs.each { output ->
-                    if(project.nimbledroid.apkName != null) {
-                        if (project.nimbledroid.apkName == output.getOutputFile().getName()) {
+                    if(project.nimbledroid.apkFilename != null) {
+                        if (project.nimbledroid.apkFilename == output.getOutputFile().getName()) {
                             apkPath = output.outputFile
                         }
                     } else {
