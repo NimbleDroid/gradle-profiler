@@ -34,10 +34,7 @@ class ProfilerPlugin implements Plugin<Project> {
         nimbleProperties = project.file("${project.rootDir}/nimbledroid.properties")
 
         project.task('ndUpload') << {
-            if (project.nimbledroid.apiKey == null) {
-                println 'Must set nimbledroid.apiKey'
-                throw new StopActionException()
-            }
+            checkKey(project)
             http.auth.basic(project.nimbledroid.apiKey, "")
             if(project.nimbledroid.apkPath == null) {
                 String apkPath = null
@@ -87,10 +84,7 @@ class ProfilerPlugin implements Plugin<Project> {
         }
 
         project.task('ndGetProfile') << {
-            if (project.nimbledroid.apiKey == null) {
-                println 'Must set nimbledroid.apiKey'
-                throw new StopActionException()
-            }
+            checkKey(project)
             if(!nimbleProperties.exists()) {
                 project.ndUpload.execute()
             }
@@ -129,12 +123,16 @@ class ProfilerPlugin implements Plugin<Project> {
         }
 
         project.task('ndProfile') << {
-            if (project.nimbledroid.apiKey == null) {
-                println 'Must set nimbledroid.apiKey'
-                throw new StopActionException()
-            }
+            checkKey(project)
             project.ndUpload.execute()
             project.ndGetProfile.execute()
+        }
+    }
+
+    void checkKey(Project project) {
+        if (project.nimbledroid.apiKey == null) {
+            println 'Must set nimbledroid.apiKey'
+            throw new StopActionException()
         }
     }
 }
