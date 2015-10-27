@@ -4,6 +4,7 @@ import groovyx.net.http.HTTPBuilder
 import static groovyx.net.http.ContentType.JSON
 import static groovyx.net.http.Method.GET
 import static groovyx.net.http.Method.POST
+import java.util.concurrent.TimeUnit
 import static org.apache.http.entity.ContentType.TEXT_PLAIN
 import org.apache.http.entity.mime.MultipartEntity
 import org.apache.http.entity.mime.content.FileBody
@@ -16,6 +17,7 @@ class ProfilerPluginExtension {
     String apiKey
     String variant = 'release'
     String apkFilename
+    long timeout = 300
 }
 
 class AppDataExtension {
@@ -109,18 +111,24 @@ class ProfilerPlugin implements Plugin<Project> {
             try {
                 URL url = new URL(latestProfile)
                 uriPath = url.getPath()
-            } catch(MalformedURLException e) {
-            }
+            } catch(MalformedURLException e) {}
+            long timeout = System.nanoTime() + TimeUnit.NANOSECONDS.convert(project.nimbledroid.timeout, TimeUnit.SECONDS)
             while(!done) {
                 http.request(GET) { req ->
                     uri.path = uriPath
                     response.success = { resp, reader ->
-                        println reader.console_message
                         switch(reader.status) {
                             case ["Profiled", "Failed"]:
+                                println reader.console_message
                                 done = true
                                 break
                             default:
+                                if (timeout < System.nanoTime()) {
+                                    println 'Profiling timed out'
+                                    done = true
+                                } else {
+                                    println reader.console_message
+                                }
                                 break
                         }
                     }
