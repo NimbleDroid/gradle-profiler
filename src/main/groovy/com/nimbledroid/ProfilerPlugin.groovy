@@ -17,7 +17,7 @@ class ProfilerPluginExtension {
     String apiKey
     String variant = 'release'
     String apkFilename
-    long timeout = 1800
+    long ndGetProfileTimeout = 1800
     String server = 'https://www.nimbledroid.com'
 }
 
@@ -115,7 +115,7 @@ class ProfilerPlugin implements Plugin<Project> {
                 URL url = new URL(latestProfile)
                 uriPath = url.getPath()
             } catch(MalformedURLException e) {}
-            long timeout = System.nanoTime() + TimeUnit.NANOSECONDS.convert(project.nimbledroid.timeout, TimeUnit.SECONDS)
+            long timeout = System.nanoTime() + TimeUnit.NANOSECONDS.convert(project.nimbledroid.ndGetProfileTimeout, TimeUnit.SECONDS)
             while(!done) {
                 http.request(GET) { req ->
                     uri.path = uriPath
