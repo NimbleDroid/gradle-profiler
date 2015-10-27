@@ -55,12 +55,12 @@ class ProfilerPlugin implements Plugin<Project> {
             }
             if(apkPath == null) {
                 println "No variant named ${project.nimbledroid.variant}"
-                throw new StopActionException()
+                ndUploadFailure()
             }
             File apk = project.file(apkPath)
             if (!apk.exists()) {
                 println "No apk exists for variant ${project.nimbledroid.variant}"
-                throw new StopActionException()
+                ndUploadFailure()
             }
             http.request(POST, JSON) { req ->
                 uri.path = '/api/v1/apks'
@@ -72,8 +72,7 @@ class ProfilerPlugin implements Plugin<Project> {
                     if(!commitHash.startsWith("fatal")) {
                         entity.addPart('commit', new StringBody(commitHash, TEXT_PLAIN));
                     }
-                } catch(IOException e) {
-                }
+                } catch(IOException e) {}
                 if(project.hasProperty('branch')) {
                     entity.addPart('branch', new StringBody("${project.branch}", TEXT_PLAIN));
                 }
@@ -95,6 +94,7 @@ class ProfilerPlugin implements Plugin<Project> {
                 response.failure = { resp ->
                     println 'There was a problem reaching the NimbleDroid service.'
                     println 'You can contact support@nimbledroid.com if you need assistance.'
+                    ndUploadFailure()
                 }
             }
         }
@@ -102,7 +102,8 @@ class ProfilerPlugin implements Plugin<Project> {
         project.task('ndGetProfile') << {
             checkKey(project)
             if(!nimbleProperties.exists()) {
-                project.ndUpload.execute()
+                println 'Couldn\'t find nimbledroid.properties file, ndUpload task was either not run or failed.'
+                throw new StopActionException()
             }
             http.auth.basic(project.nimbledroid.apiKey, "")
             Boolean done = false
@@ -142,12 +143,17 @@ class ProfilerPlugin implements Plugin<Project> {
                     sleep(30000)
                 }
             }
+            if(nimbleProperties.exists()) {
+                nimbleProperties.delete()
+            }
         }
 
         project.task('ndProfile') << {
             checkKey(project)
             project.ndUpload.execute()
-            project.ndGetProfile.execute()
+            if(nimbleProperties.exists()) {
+                project.ndGetProfile.execute()
+            }
         }
     }
 
@@ -156,5 +162,12 @@ class ProfilerPlugin implements Plugin<Project> {
             println 'Must set nimbledroid.apiKey'
             throw new StopActionException()
         }
+    }
+
+    void ndUploadFailure() {
+        if(nimbleProperties.exists()) {
+            nimbleProperties.delete()
+        }
+        throw new StopActionException()
     }
 }
