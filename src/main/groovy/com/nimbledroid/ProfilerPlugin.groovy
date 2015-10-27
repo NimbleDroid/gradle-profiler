@@ -17,7 +17,7 @@ class ProfilerPluginExtension {
     String apiKey
     String variant = 'release'
     String apkFilename
-    long timeout = 300
+    long timeout = 15
 }
 
 class AppDataExtension {
