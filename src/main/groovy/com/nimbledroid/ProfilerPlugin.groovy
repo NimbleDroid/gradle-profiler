@@ -34,10 +34,10 @@ class ProfilerPlugin implements Plugin<Project> {
         project.extensions.create("nimbledroid", ProfilerPluginExtension)
         project.nimbledroid.extensions.create("appData", AppDataExtension)
 
-        http = new HTTPBuilder(project.nimbledroid.server)
         nimbleProperties = project.file("${project.rootDir}/nimbledroid.properties")
 
         project.task('ndUpload') << {
+            http = new HTTPBuilder(project.nimbledroid.server)
             checkKey(project)
             http.auth.basic(project.nimbledroid.apiKey, "")
             String apkPath = null
@@ -101,6 +101,7 @@ class ProfilerPlugin implements Plugin<Project> {
         }
 
         project.task('ndGetProfile') << {
+            http = new HTTPBuilder(project.nimbledroid.server)
             checkKey(project)
             if(!nimbleProperties.exists()) {
                 println 'Couldn\'t find nimbledroid.properties file, ndUpload task was either not run or failed.'
