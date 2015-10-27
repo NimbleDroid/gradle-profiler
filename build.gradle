@@ -30,7 +30,7 @@ uploadArchives {
 
 pluginBundle {
     website = 'https://www.nimbledroid.com'
-    vcsUrl = 'https://github.com/Tubebaum/gradle-profiler'
+    vcsUrl = 'https://github.com/NimbleDroid/gradle-profiler'
     description = 'A plugin that interfaces with NimbleDroid to automate app profiling.'
     tags = ['nimbledroid', 'profiling']
 
