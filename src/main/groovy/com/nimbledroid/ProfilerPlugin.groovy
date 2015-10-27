@@ -18,6 +18,7 @@ class ProfilerPluginExtension {
     String variant = 'release'
     String apkFilename
     long timeout = 1800
+    String server = 'https://www.nimbledroid.com'
 }
 
 class AppDataExtension {
@@ -33,7 +34,7 @@ class ProfilerPlugin implements Plugin<Project> {
         project.extensions.create("nimbledroid", ProfilerPluginExtension)
         project.nimbledroid.extensions.create("appData", AppDataExtension)
 
-        http = new HTTPBuilder('https://staging.nimbledroid.com')
+        http = new HTTPBuilder(project.nimbledroid.server)
         nimbleProperties = project.file("${project.rootDir}/nimbledroid.properties")
 
         project.task('ndUpload') << {
