@@ -9,11 +9,11 @@ Build script snippet for use in all Gradle versions:
     buildscript {
         repositories {
             maven {
-                url "https://raw.githubusercontent.com/Tubebaum/maven-repo/master/"
+                url 'https://plugins.gradle.org/m2/'
             }
         }
         dependencies {
-            classpath 'com.nimbledroid:gradle-profiler:1.0.1'
+            classpath 'gradle.plugin.com.nimbledroid:gradle-profiler:1.0.2'
         }
     }
 
@@ -22,7 +22,7 @@ Build script snippet for use in all Gradle versions:
 Build script snippet for new, incubating, plugin mechanism introduced in Gradle 2.1:
 
     plugins {
-        id "com.nimbledroid.profiler" version "1.0.1"
+        id "com.nimbledroid.profiler" version "1.0.2"
     }
 
 Specify the following in build.gradle to configure the plugin:
