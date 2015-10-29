@@ -83,8 +83,8 @@ class ProfilerPlugin implements Plugin<Project> {
                 if(project.nimbledroid.hasProperty('appData')) {
                     if (project.nimbledroid.appData.username != null) {
                         entity.addPart('auto_login', new StringBody("true", TEXT_PLAIN));
-                        entity.addPart('username', new StringBody("{project.nimbledroid.appData.username}", TEXT_PLAIN));
-                        entity.addPart('password', new StringBody("{project.nimbledroid.appData.password}", TEXT_PLAIN));
+                        entity.addPart('username', new StringBody("${project.nimbledroid.appData.username}", TEXT_PLAIN));
+                        entity.addPart('password', new StringBody("${project.nimbledroid.appData.password}", TEXT_PLAIN));
                     }
                 }
                 req.entity = entity
