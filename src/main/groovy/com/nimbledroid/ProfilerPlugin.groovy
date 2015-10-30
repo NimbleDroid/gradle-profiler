@@ -29,12 +29,14 @@ class AppDataExtension {
 class ProfilerPlugin implements Plugin<Project> {
     HTTPBuilder http
     File nimbleProperties
+    String nimbleVersion
 
     void apply(Project project) {
         project.extensions.create("nimbledroid", ProfilerPluginExtension)
         project.nimbledroid.extensions.create("appData", AppDataExtension)
 
         nimbleProperties = project.file("${project.rootDir}/nimbledroid.properties")
+        nimbleVersion = '1.0.3'
 
         project.task('ndUpload') << {
             http = new HTTPBuilder(project.nimbledroid.server)
@@ -65,6 +67,8 @@ class ProfilerPlugin implements Plugin<Project> {
             }
             http.request(POST, JSON) { req ->
                 uri.path = '/api/v1/apks'
+                headers.'User-Agent' = "NimbleDroid Profiler Gradle Plugin/$nimbleVersion"
+                headers.'gradle' = nimbleVersion
                 requestContentType = 'multipart/form-data'
                 MultipartEntity entity = new MultipartEntity()
                 entity.addPart('apk', new FileBody(apk))
@@ -89,8 +93,14 @@ class ProfilerPlugin implements Plugin<Project> {
                 }
                 req.entity = entity
                 response.success = { resp, reader ->
-                    println "Profile URL: ${reader.profile_url}"
-                    nimbleProperties.write(reader.profile_url)
+                    if(reader.console_message != null) {
+                        println reader.console_message
+                    }
+                    if(reader.profile_url != null) {
+                        nimbleProperties.write(reader.profile_url)
+                    } else {
+                        ndUploadFailure()
+                    }
                 }
                 response.failure = { resp ->
                     println "There was a problem reaching the NimbleDroid service ($project.nimbledroid.server$uri.path)."
@@ -119,6 +129,8 @@ class ProfilerPlugin implements Plugin<Project> {
             while(!done) {
                 http.request(GET) { req ->
                     uri.path = uriPath
+                    headers.'User-Agent' = "NimbleDroid Profiler Gradle Plugin/$nimbleVersion"
+                    headers.'gradle' = nimbleVersion
                     response.success = { resp, reader ->
                         switch(reader.status) {
                             case ["Profiled", "Failed"]:
