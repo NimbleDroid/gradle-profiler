@@ -97,6 +97,7 @@ class ProfilerPlugin implements Plugin<Project> {
                         println reader.console_message
                     }
                     if(reader.profile_url != null) {
+                        println "Profile URL: ${reader.profile_url}"
                         nimbleProperties.write(reader.profile_url)
                     } else {
                         ndUploadFailure()
