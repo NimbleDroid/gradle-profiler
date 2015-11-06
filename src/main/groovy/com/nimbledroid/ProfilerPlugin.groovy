@@ -36,7 +36,7 @@ class ProfilerPlugin implements Plugin<Project> {
         project.nimbledroid.extensions.create("appData", AppDataExtension)
 
         nimbleProperties = project.file("${project.rootDir}/nimbledroid.properties")
-        nimbleVersion = '1.0.3'
+        nimbleVersion = '1.0.4'
 
         project.task('ndUpload') << {
             http = new HTTPBuilder(project.nimbledroid.server)
