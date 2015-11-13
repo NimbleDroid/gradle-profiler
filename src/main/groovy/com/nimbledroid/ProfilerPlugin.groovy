@@ -36,7 +36,7 @@ class ProfilerPlugin implements Plugin<Project> {
         project.nimbledroid.extensions.create("appData", AppDataExtension)
 
         nimbleProperties = project.file("${project.rootDir}/nimbledroid.properties")
-        nimbleVersion = '1.0.4'
+        nimbleVersion = '1.0.5'
 
         project.task('ndUpload') << {
             http = new HTTPBuilder(project.nimbledroid.server)
@@ -103,6 +103,10 @@ class ProfilerPlugin implements Plugin<Project> {
                         ndUploadFailure()
                     }
                 }
+                response.'401' = { resp ->
+                      println "Invalid API key, visit ${project.nimbledroid.server}/account to retrieve the current key."
+                      println 'You can contact support@nimbledroid.com if you need assistance.'
+                }
                 response.failure = { resp ->
                     println "There was a problem reaching the NimbleDroid service ($project.nimbledroid.server$uri.path)."
                     println 'You can contact support@nimbledroid.com if you need assistance.'
@@ -152,6 +156,11 @@ class ProfilerPlugin implements Plugin<Project> {
                         println 'There was a problem parsing the profile response.'
                         println 'You can contact support@nimbledroid.com if you need assistance.'
                         done = true
+                    }
+                    response.'401' = { resp ->
+                          println "Invalid API key, visit ${project.nimbledroid.server}/account to retrieve the current key."
+                          println 'You can contact support@nimbledroid.com if you need assistance.'
+                          done = true
                     }
                 }
                 if(!done) {
