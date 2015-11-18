@@ -75,20 +75,20 @@ class ProfilerPlugin implements Plugin<Project> {
                 try {
                     String commitHash = "git rev-parse HEAD".execute().text.trim()
                     if(commitHash != "") {
-                        entity.addPart('commit', new StringBody(commitHash, TEXT_PLAIN));
+                        entity.addPart('commit', new StringBody(commitHash));
                     }
                 } catch(IOException e) {}
                 if(project.hasProperty('branch')) {
-                    entity.addPart('branch', new StringBody("${project.branch}", TEXT_PLAIN));
+                    entity.addPart('branch', new StringBody("${project.branch}"));
                 }
                 if(project.hasProperty('flavor')) {
-                    entity.addPart('flavor', new StringBody("${project.flavor}", TEXT_PLAIN));
+                    entity.addPart('flavor', new StringBody("${project.flavor}"));
                 }
                 if(project.nimbledroid.hasProperty('appData')) {
                     if (project.nimbledroid.appData.username != null) {
-                        entity.addPart('auto_login', new StringBody("true", TEXT_PLAIN));
-                        entity.addPart('username', new StringBody("${project.nimbledroid.appData.username}", TEXT_PLAIN));
-                        entity.addPart('password', new StringBody("${project.nimbledroid.appData.password}", TEXT_PLAIN));
+                        entity.addPart('auto_login', new StringBody("true"));
+                        entity.addPart('username', new StringBody("${project.nimbledroid.appData.username}"));
+                        entity.addPart('password', new StringBody("${project.nimbledroid.appData.password}"));
                     }
                 }
                 req.entity = entity

@@ -20,6 +20,10 @@ dependencies {
     compile 'org.apache.httpcomponents:httpmime:4.5.1'
 }
 
+compileGroovy {
+    targetCompatibility '1.6'
+}
+
 uploadArchives {
     repositories {
         mavenDeployer {
