@@ -16,7 +16,7 @@ import org.gradle.api.tasks.StopActionException
 class ProfilerPluginExtension {
     String apiKey
     String variant = 'release'
-    String apkFilename
+    String apkFilename = null
     long ndGetProfileTimeout = 1800
     String server = 'https://www.nimbledroid.com'
 }
@@ -43,27 +43,33 @@ class ProfilerPlugin implements Plugin<Project> {
             checkKey(project)
             http.auth.basic(project.nimbledroid.apiKey, "")
             String apkPath = null
-            project.android.applicationVariants.all { variant ->
-                variant.outputs.each { output ->
-                    if(project.nimbledroid.apkFilename != null) {
-                        if (project.nimbledroid.apkFilename == output.getOutputFile().getName()) {
-                            apkPath = output.outputFile
-                        }
-                    } else {
+            File apk = null
+            if(!project.nimbledroid.apkFilename) {
+                project.android.applicationVariants.all { variant ->
+                    variant.outputs.each { output ->
                         if(variant.name == project.nimbledroid.variant) {
                             apkPath = output.outputFile
                         }
                     }
                 }
-            }
-            if(apkPath == null) {
-                println "No variant named ${project.nimbledroid.variant}"
-                ndUploadFailure()
-            }
-            File apk = project.file(apkPath)
-            if (!apk.exists()) {
-                println "No apk exists for variant ${project.nimbledroid.variant}"
-                ndUploadFailure()
+                if(apkPath == null) {
+                    println "No variant named ${project.nimbledroid.variant}"
+                    ndUploadFailure()
+                }
+                apk = project.file(apkPath)
+                if (!apk.exists()) {
+                    println "No apk exists for variant ${project.nimbledroid.variant}"
+                    ndUploadFailure()
+                }
+            } else {
+                apk = project.file("build/outputs/apk/$project.nimbledroid.apkFilename")
+                if(!apk.exists()) {
+                    apk = new File(project.nimbledroid.apkFilename)
+                    if(!apk.exists()) {
+                        println "Could not find ${apk.getAbsolutePath()}"
+                        ndUploadFailure()
+                    }
+                }
             }
             http.request(POST, JSON) { req ->
                 uri.path = '/api/v1/apks'
