@@ -16,7 +16,7 @@ import org.gradle.api.tasks.StopActionException
 class ProfilerPluginExtension {
     String apiKey
     String variant = 'release'
-    String apkFilename = null
+    String apkFilename
     long ndGetProfileTimeout = 1800
     String server = 'https://www.nimbledroid.com'
 }
@@ -36,7 +36,7 @@ class ProfilerPlugin implements Plugin<Project> {
         project.nimbledroid.extensions.create("appData", AppDataExtension)
 
         nimbleProperties = project.file("${project.rootDir}/nimbledroid.properties")
-        nimbleVersion = '1.0.5'
+        nimbleVersion = '1.0.6'
 
         project.task('ndUpload') << {
             http = new HTTPBuilder(project.nimbledroid.server)
