@@ -13,7 +13,7 @@ Build script snippet for use in all Gradle versions:
             }
         }
         dependencies {
-            classpath 'gradle.plugin.com.nimbledroid:gradle-profiler:1.0.4'
+            classpath 'gradle.plugin.com.nimbledroid:gradle-profiler:1.0.5'
         }
     }
 
@@ -22,7 +22,7 @@ Build script snippet for use in all Gradle versions:
 Build script snippet for new, incubating, plugin mechanism introduced in Gradle 2.1:
 
     plugins {
-        id "com.nimbledroid.profiler" version "1.0.4"
+        id "com.nimbledroid.profiler" version "1.0.5"
     }
 
 Specify the following in build.gradle to configure the plugin:
