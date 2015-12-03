@@ -227,14 +227,7 @@ class ProfilerPlugin implements Plugin<Project> {
 
     void greeting(Project project) {
         if (!greetingLock) {
-            String remoteRepository = ''
-            try {
-              remoteRepository = 'git config --get remote.origin.url'.execute().text.trim()
-              if (remoteRepository) {
-                  remoteRepository = " from $remoteRepository"
-              }
-            } catch (IOException e) {}
-            println "Running NimbleDroid Gradle Plugin v${nimbleVersion}${remoteRepository}. For more info see $project.nimbledroid.server"
+            println "Running NimbleDroid Gradle Plugin v${nimbleVersion}. For more info see $project.nimbledroid.server"
             greetingLock = true
         }
     }
