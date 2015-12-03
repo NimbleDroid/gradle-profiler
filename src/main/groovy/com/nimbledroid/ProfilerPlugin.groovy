@@ -31,6 +31,7 @@ class ProfilerPlugin implements Plugin<Project> {
     HTTPBuilder http = null
     File nimbleProperties = null
     String nimbleVersion = null
+    Boolean greetingLock = false
 
     void apply(Project project) {
         project.extensions.create('nimbledroid', ProfilerPluginExtension)
@@ -40,6 +41,7 @@ class ProfilerPlugin implements Plugin<Project> {
         nimbleVersion = '1.0.6'
 
         project.task('ndUpload') << {
+            greeting(project)
             http = new HTTPBuilder(project.nimbledroid.server)
             checkKey(project)
             http.auth.basic(project.nimbledroid.apiKey, '')
@@ -143,6 +145,7 @@ class ProfilerPlugin implements Plugin<Project> {
         }
 
         project.task('ndGetProfile') << {
+            greeting(project)
             http = new HTTPBuilder(project.nimbledroid.server)
             checkKey(project)
             if (!nimbleProperties.exists()) {
@@ -220,5 +223,19 @@ class ProfilerPlugin implements Plugin<Project> {
             nimbleProperties.delete()
         }
         throw new StopActionException()
+    }
+
+    void greeting(Project project) {
+        if (!greetingLock) {
+            String remoteRepository = ''
+            try {
+              remoteRepository = 'git config --get remote.origin.url'.execute().text.trim()
+              if (remoteRepository) {
+                  remoteRepository = " from $remoteRepository"
+              }
+            } catch (IOException e) {}
+            println "Running NimbleDroid Gradle Plugin v${nimbleVersion}${remoteRepository}. For more info see $project.nimbledroid.server"
+            greetingLock = true
+        }
     }
 }
