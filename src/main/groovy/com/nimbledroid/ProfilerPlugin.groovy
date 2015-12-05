@@ -237,6 +237,7 @@ class ProfilerPlugin implements Plugin<Project> {
           uri.path = '/errors'
           requestContentType = APPLICATION_JSON
           body = [category: 'gradle', error: errorMessage]
+          response.failure = {}
         }
         throw new StopActionException()
     }
