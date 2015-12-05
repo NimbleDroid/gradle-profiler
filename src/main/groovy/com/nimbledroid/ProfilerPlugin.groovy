@@ -5,6 +5,7 @@ import static groovyx.net.http.ContentType.JSON
 import static groovyx.net.http.Method.GET
 import static groovyx.net.http.Method.POST
 import java.util.concurrent.TimeUnit
+import static org.apache.http.entity.ContentType.APPLICATION_JSON
 import static org.apache.http.entity.ContentType.TEXT_PLAIN
 import org.apache.http.entity.mime.MultipartEntity
 import org.apache.http.entity.mime.content.FileBody
@@ -54,7 +55,7 @@ class ProfilerPlugin implements Plugin<Project> {
                     apk = new File(project.nimbledroid.apkFilename)
                     if (!apk.exists()) {
                         println "Could not find ${apk.getAbsolutePath()}"
-                        ndUploadFailure()
+                        ndFailure('apkFilenameError')
                     }
                 }
             } else if (project.hasProperty('android')) {
@@ -68,24 +69,25 @@ class ProfilerPlugin implements Plugin<Project> {
                 }
                 if (apkPath == null) {
                     println "No variant named $project.nimbledroid.variant"
-                    ndUploadFailure()
+                    ndFailure('variantNameError')
                 }
                 apk = project.file(apkPath)
                 if (!apk.exists()) {
                     println "No apk exists for variant $project.nimbledroid.variant"
-                    ndUploadFailure()
+                    ndFailure('variantApkError')
                 }
             } else {
                 println "Could not find android block. Please apply the plugin to your app's build.gradle or define an apkFilename"
-                ndUploadFailure()
+                ndFailure('androidError')
             }
             if (project.nimbledroid.apkMapping) {
                 mapping = new File(project.nimbledroid.apkMapping)
                 if (!mapping.exists()) {
                     println "Could not find ${mapping.getAbsolutePath()}"
-                    ndUploadFailure()
+                    ndFailure('mappingError')
                 }
             }
+            String errorMessage = null
             http.request(POST, JSON) { req ->
                 uri.path = '/api/v1/apks'
                 headers.'User-Agent' = "NimbleDroid Profiler Gradle Plugin/$nimbleVersion"
@@ -128,19 +130,21 @@ class ProfilerPlugin implements Plugin<Project> {
                     if (reader.profile_url) {
                         println "Profile URL: $reader.profile_url"
                         nimbleProperties.write(reader.profile_url)
-                    } else {
-                        ndUploadFailure()
                     }
                 }
                 response.'401' = { resp ->
                       println "Invalid API key, visit $project.nimbledroid.server/account to retrieve the current key."
                       println 'You can contact support@nimbledroid.com if you need assistance.'
+                      errorMessage = 'invalidKeyError'
                 }
                 response.failure = { resp ->
                     println "There was a problem reaching the NimbleDroid service ($project.nimbledroid.server$uri.path)."
                     println 'You can contact support@nimbledroid.com if you need assistance.'
-                    ndUploadFailure()
+                    errorMessage = 'requestError'
                 }
+            }
+            if (errorMessage) {
+                ndFailure(errorMessage)
             }
         }
 
@@ -150,7 +154,7 @@ class ProfilerPlugin implements Plugin<Project> {
             checkKey(project)
             if (!nimbleProperties.exists()) {
                 println "Couldn\'t find nimbledroid.properties file, ndUpload task was either not run or failed."
-                throw new StopActionException()
+                ndFailure('propertiesError')
             }
             http.auth.basic(project.nimbledroid.apiKey, '')
             Boolean done = false
@@ -161,6 +165,7 @@ class ProfilerPlugin implements Plugin<Project> {
                 uriPath = url.getPath()
             } catch (MalformedURLException e) {}
             long timeout = System.nanoTime() + TimeUnit.NANOSECONDS.convert(project.nimbledroid.ndGetProfileTimeout, TimeUnit.SECONDS)
+            String errorMessage = null
             while (!done) {
                 http.request(GET) { req ->
                     uri.path = uriPath
@@ -175,6 +180,7 @@ class ProfilerPlugin implements Plugin<Project> {
                             default:
                                 if (timeout < System.nanoTime()) {
                                     println 'Profiling timed out'
+                                    errorMessage = 'timeoutError'
                                     done = true
                                 } else {
                                     println reader.console_message
@@ -185,17 +191,22 @@ class ProfilerPlugin implements Plugin<Project> {
                     response.failure = { resp ->
                         println 'There was a problem parsing the profile response.'
                         println 'You can contact support@nimbledroid.com if you need assistance.'
+                        errorMessage = 'requestError'
                         done = true
                     }
                     response.'401' = { resp ->
                           println "Invalid API key, visit $project.nimbledroid.server/account to retrieve the current key."
                           println 'You can contact support@nimbledroid.com if you need assistance.'
+                          errorMessage = 'invalidKeyError'
                           done = true
                     }
                 }
                 if (!done) {
                     sleep(30000)
                 }
+            }
+            if (errorMessage) {
+                ndFailure(errorMessage)
             }
             if (nimbleProperties.exists()) {
                 nimbleProperties.delete()
@@ -214,13 +225,18 @@ class ProfilerPlugin implements Plugin<Project> {
     void checkKey(Project project) {
         if (project.nimbledroid.apiKey == null) {
             println 'Must set nimbledroid.apiKey'
-            throw new StopActionException()
+            ndFailure('nullKeyError')
         }
     }
 
-    void ndUploadFailure() {
+    void ndFailure(String errorMessage) {
         if (nimbleProperties.exists()) {
             nimbleProperties.delete()
+        }
+        http.request(POST) { req ->
+          uri.path = '/errors'
+          requestContentType = APPLICATION_JSON
+          body = [category: 'gradle', error: errorMessage]
         }
         throw new StopActionException()
     }
