@@ -244,7 +244,12 @@ class ProfilerPlugin implements Plugin<Project> {
 
     void greeting(Project project) {
         if (!greetingLock) {
-            println "Running NimbleDroid Gradle Plugin v${nimbleVersion}. For more info see $project.nimbledroid.server"
+            String service = project.nimbledroid.server
+            try {
+                URL url = new URL(service)
+                service = url.getHost()
+            } catch (MalformedURLException e) {}
+            println "Running NimbleDroid Gradle Plugin v${nimbleVersion}, using service $service. For more info see $project.nimbledroid.server/help/ci"
             greetingLock = true
         }
     }
