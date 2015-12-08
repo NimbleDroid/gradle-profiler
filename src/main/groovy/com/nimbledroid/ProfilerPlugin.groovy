@@ -19,6 +19,7 @@ class ProfilerPluginExtension {
     String variant = 'release'
     String apkFilename = null
     String mappingFilename = null
+    Boolean mappingUpload = true
     long ndGetProfileTimeout = 1800
     String server = 'https://www.nimbledroid.com'
 }
@@ -63,7 +64,9 @@ class ProfilerPlugin implements Plugin<Project> {
                     variant.outputs.each { output ->
                         if (variant.name == project.nimbledroid.variant) {
                             apkPath = output.outputFile
-                            mapping = variant.mappingFile
+                            if (project.nimbledroid.mappingUpload) {
+                                mapping = variant.mappingFile
+                            }
                         }
                     }
                 }
@@ -80,7 +83,7 @@ class ProfilerPlugin implements Plugin<Project> {
                 println "Could not find android block. Please apply the plugin to your app's build.gradle or define an apkFilename"
                 ndFailure('androidError')
             }
-            if (project.nimbledroid.mappingFilename) {
+            if (project.nimbledroid.mappingUpload && project.nimbledroid.mappingFilename) {
                 mapping = new File(project.nimbledroid.mappingFilename)
                 if (!mapping.exists()) {
                     println "Could not find ${mapping.getAbsolutePath()}"
@@ -98,6 +101,7 @@ class ProfilerPlugin implements Plugin<Project> {
                 if (mapping) {
                     entity.addPart('mapping', new FileBody(mapping))
                     entity.addPart('has_mapping', new StringBody('true'))
+                    println "Proguard enabled, found mapping.txt"
                 }
                 try {
                     String commitHash = 'git rev-parse HEAD'.execute().text.trim()
