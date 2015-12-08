@@ -18,7 +18,7 @@ class ProfilerPluginExtension {
     String apiKey = null
     String variant = 'release'
     String apkFilename = null
-    String apkMapping = null
+    String mappingFilename = null
     long ndGetProfileTimeout = 1800
     String server = 'https://www.nimbledroid.com'
 }
@@ -80,8 +80,8 @@ class ProfilerPlugin implements Plugin<Project> {
                 println "Could not find android block. Please apply the plugin to your app's build.gradle or define an apkFilename"
                 ndFailure('androidError')
             }
-            if (project.nimbledroid.apkMapping) {
-                mapping = new File(project.nimbledroid.apkMapping)
+            if (project.nimbledroid.mappingFilename) {
+                mapping = new File(project.nimbledroid.mappingFilename)
                 if (!mapping.exists()) {
                     println "Could not find ${mapping.getAbsolutePath()}"
                     ndFailure('mappingError')
