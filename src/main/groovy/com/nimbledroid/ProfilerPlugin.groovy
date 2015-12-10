@@ -56,7 +56,7 @@ class ProfilerPlugin implements Plugin<Project> {
                 if (!apk.exists()) {
                     apk = new File(project.nimbledroid.apkFilename)
                     if (!apk.exists()) {
-                        println "Could not find ${apk.getAbsolutePath()}"
+                        println "Could not find apk ${apk.getAbsolutePath()}"
                         ndFailure('apkFilenameError')
                     }
                 }
@@ -88,7 +88,7 @@ class ProfilerPlugin implements Plugin<Project> {
                 mapping = new File(project.nimbledroid.mappingFilename)
                 explicitMapping = true
                 if (!mapping.exists()) {
-                    println "Could not find ${mapping.getAbsolutePath()}"
+                    println "Could not find mapping ${mapping.getAbsolutePath()}"
                     ndFailure('mappingError')
                 }
             }
