@@ -50,6 +50,7 @@ class ProfilerPlugin implements Plugin<Project> {
             String apkPath = null
             File apk = null
             File mapping = null
+            Boolean explicitMapping = false
             if (project.nimbledroid.apkFilename) {
                 apk = project.file("build/outputs/apk/$project.nimbledroid.apkFilename")
                 if (!apk.exists()) {
@@ -85,6 +86,7 @@ class ProfilerPlugin implements Plugin<Project> {
             }
             if (project.nimbledroid.mappingUpload && project.nimbledroid.mappingFilename) {
                 mapping = new File(project.nimbledroid.mappingFilename)
+                explicitMapping = true
                 if (!mapping.exists()) {
                     println "Could not find ${mapping.getAbsolutePath()}"
                     ndFailure('mappingError')
@@ -101,7 +103,7 @@ class ProfilerPlugin implements Plugin<Project> {
                 if (mapping) {
                     entity.addPart('mapping', new FileBody(mapping))
                     entity.addPart('has_mapping', new StringBody('true'))
-                    println "Proguard enabled, found mapping.txt"
+                    println "${explicitMapping ? "mappingFilename set" : "ProGuard enabled"} in build.gradle, uploading ProGuard mapping ${mapping.getAbsolutePath()}"
                 }
                 try {
                     String commitHash = 'git rev-parse HEAD'.execute().text.trim()
