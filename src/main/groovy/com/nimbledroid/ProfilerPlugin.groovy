@@ -81,7 +81,7 @@ class ProfilerPlugin implements Plugin<Project> {
                     ndFailure('variantApkError')
                 }
             } else {
-                println "Could not find android block. Please apply the plugin to your app's build.gradle or define an apkFilename"
+                println 'The NimbleDroid plugin requires either an android code block or the definition of an apkFilename in build.gradle'
                 ndFailure('androidError')
             }
             if (project.nimbledroid.mappingUpload && project.nimbledroid.mappingFilename) {
@@ -103,7 +103,7 @@ class ProfilerPlugin implements Plugin<Project> {
                 if (mapping) {
                     entity.addPart('mapping', new FileBody(mapping))
                     entity.addPart('has_mapping', new StringBody('true'))
-                    println "${explicitMapping ? "mappingFilename set" : "ProGuard enabled"} in build.gradle, uploading ProGuard mapping ${mapping.getAbsolutePath()}"
+                    println "${explicitMapping ? 'mappingFilename set' : 'ProGuard enabled'} in build.gradle, uploading ProGuard mapping ${mapping.getAbsolutePath()}"
                 }
                 try {
                     String commitHash = 'git rev-parse HEAD'.execute().text.trim()
