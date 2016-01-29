@@ -21,7 +21,7 @@ class ProfilerPluginExtension {
     String mappingFilename = null
     Boolean mappingUpload = true
     long ndGetProfileTimeout = 1800
-    String server = 'https://www.nimbledroid.com'
+    String server = 'https://nimbledroid.com'
 }
 
 class AppDataExtension {
@@ -40,7 +40,7 @@ class ProfilerPlugin implements Plugin<Project> {
         project.nimbledroid.extensions.create('appData', AppDataExtension)
 
         nimbleProperties = project.file("$project.rootDir/nimbledroid.properties")
-        nimbleVersion = '1.0.6'
+        nimbleVersion = '1.0.7'
 
         project.task('ndUpload') << {
             greeting(project)
@@ -136,6 +136,7 @@ class ProfilerPlugin implements Plugin<Project> {
                     if (reader.profile_url) {
                         println "Profile URL: $reader.profile_url"
                         nimbleProperties.write(reader.profile_url)
+                        nimbleProperties.append('\n')
                     }
                 }
                 response.'401' = { resp ->
