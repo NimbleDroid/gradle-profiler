@@ -6,7 +6,7 @@ apply plugin: 'groovy'
 apply plugin: 'maven'
 
 group = 'com.nimbledroid'
-version = '1.0.6'
+version = '1.0.7'
 
 repositories {
     mavenCentral()
@@ -27,7 +27,7 @@ compileGroovy {
 uploadArchives {
     repositories {
         mavenDeployer {
-            repository(url: uri('../repo'))
+            repository(url: uri('../maven-repo'))
         }
     }
 }
