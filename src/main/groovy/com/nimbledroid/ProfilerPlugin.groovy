@@ -84,9 +84,11 @@ class ProfilerPlugin implements Plugin<Project> {
                 println 'The NimbleDroid plugin requires either an android code block or the definition of an apkFilename in build.gradle.'
                 ndFailure('androidError')
             }
-            if (project.nimbledroid.mappingUpload && project.nimbledroid.mappingFilename) {
-                mapping = new File(project.nimbledroid.mappingFilename)
-                explicitMapping = true
+            if (project.nimbledroid.mappingUpload) {
+                if (project.nimbledroid.mappingFilename) {
+                    mapping = new File(project.nimbledroid.mappingFilename)
+                    explicitMapping = true
+                }
                 if (!mapping.exists()) {
                     println "Could not find mapping ${mapping.getAbsolutePath()}"
                     ndFailure('mappingError')
