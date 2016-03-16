@@ -90,7 +90,7 @@ class ProfilerPlugin implements Plugin<Project> {
                         mapping = new File(project.nimbledroid.mappingFilename)
                         explicitMapping = true
                     }
-                    if (!mapping.exists()) {
+                    if (mapping && !mapping.exists()) {
                         println "Could not find mapping ${mapping.getAbsolutePath()}"
                         ndFailure('mappingError')
                     }
