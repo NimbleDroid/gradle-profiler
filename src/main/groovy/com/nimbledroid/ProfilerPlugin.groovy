@@ -19,6 +19,7 @@ class ProfilerPluginExtension {
     String variant = 'release'
     String apkFilename = null
     String mappingFilename = null
+    String testApkFilename = null
     Boolean mappingUpload = true
     long ndGetProfileTimeout = 1800
     String server = 'https://nimbledroid.com'
@@ -40,7 +41,7 @@ class ProfilerPlugin implements Plugin<Project> {
         project.nimbledroid.extensions.create('appData', AppDataExtension)
 
         nimbleProperties = project.file("$project.rootDir/nimbledroid.properties")
-        nimbleVersion = '1.0.8'
+        nimbleVersion = '1.0.9'
 
         project.task('ndUpload') << {
             try {
@@ -51,6 +52,7 @@ class ProfilerPlugin implements Plugin<Project> {
                 String apkPath = null
                 File apk = null
                 File mapping = null
+                File testApk = null
                 Boolean explicitMapping = false
                 if (project.nimbledroid.apkFilename) {
                     apk = project.file("build/outputs/apk/$project.nimbledroid.apkFilename")
@@ -95,6 +97,16 @@ class ProfilerPlugin implements Plugin<Project> {
                         ndFailure('mappingError')
                     }
                 }
+                if (project.nimbledroid.testApkFilename) {
+                    testApk = project.file("build/outputs/apk/$project.nimbledroid.testApkFilename")
+                    if (!testApk.exists()) {
+                        testApk = new File(project.nimbledroid.testApkFilename)
+                        if (!testApk.exists()) {
+                            println "Could not find test apk ${testApk.getAbsolutePath()}"
+                            ndFailure('testApkFilenameError')
+                        }
+                    }
+                }
                 String errorMessage = null
                 http.request(POST, JSON) { req ->
                     uri.path = '/api/v1/apks'
@@ -107,6 +119,9 @@ class ProfilerPlugin implements Plugin<Project> {
                         entity.addPart('mapping', new FileBody(mapping))
                         entity.addPart('has_mapping', new StringBody('true'))
                         println "${explicitMapping ? 'mappingFilename set' : 'ProGuard enabled'} in build.gradle, uploading ProGuard mapping ${mapping.getAbsolutePath()}"
+                    }
+                    if (testApk) {
+                        entity.addPart('test_apk', new FileBody(testApk))
                     }
                     try {
                         String commitHash = 'git rev-parse HEAD'.execute().text.trim()
