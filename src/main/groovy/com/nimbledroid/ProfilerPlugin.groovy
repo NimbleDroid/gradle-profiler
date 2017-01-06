@@ -10,6 +10,7 @@ import static org.apache.http.entity.ContentType.TEXT_PLAIN
 import org.apache.http.entity.mime.MultipartEntity
 import org.apache.http.entity.mime.content.FileBody
 import org.apache.http.entity.mime.content.StringBody
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.StopActionException
@@ -41,7 +42,7 @@ class ProfilerPlugin implements Plugin<Project> {
         project.nimbledroid.extensions.create('appData', AppDataExtension)
 
         nimbleProperties = project.file("$project.rootDir/nimbledroid.properties")
-        nimbleVersion = '1.0.9'
+        nimbleVersion = '1.1.0'
 
         project.task('ndUpload') << {
             try {
@@ -109,7 +110,7 @@ class ProfilerPlugin implements Plugin<Project> {
                 }
                 String errorMessage = null
                 http.request(POST, JSON) { req ->
-                    uri.path = '/api/v1/apks'
+                    uri.path = '/api/v2/apks'
                     headers.'User-Agent' = "NimbleDroid Profiler Gradle Plugin/$nimbleVersion"
                     headers.'gradle' = nimbleVersion
                     requestContentType = 'multipart/form-data'
@@ -151,9 +152,9 @@ class ProfilerPlugin implements Plugin<Project> {
                         if (reader.console_message) {
                             println reader.console_message
                         }
-                        if (reader.profile_url) {
-                            println "Profile URL: $reader.profile_url"
-                            nimbleProperties.write(reader.profile_url)
+                        if (reader.apk_url) {
+                            println "Upload URL: $reader.apk_url"
+                            nimbleProperties.write(reader.apk_url)
                             nimbleProperties.append('\n')
                         }
                     }
@@ -180,6 +181,7 @@ class ProfilerPlugin implements Plugin<Project> {
         }
 
         project.task('ndGetProfile') << {
+            Boolean failBuild = false
             try {
                 greeting(project)
                 http = new HTTPBuilder(project.nimbledroid.server)
@@ -191,7 +193,7 @@ class ProfilerPlugin implements Plugin<Project> {
                 http.auth.basic(project.nimbledroid.apiKey, '')
                 Boolean done = false
                 String latestProfile = new String(nimbleProperties.readBytes()).trim()
-                String uriPath = "/api/v1$latestProfile"
+                String uriPath
                 try {
                     URL url = new URL(latestProfile)
                     uriPath = url.getPath()
@@ -207,6 +209,10 @@ class ProfilerPlugin implements Plugin<Project> {
                             switch (reader.status) {
                                 case ['Profiled', 'Failed']:
                                     println reader.console_message
+                                    if (reader.fail_build) {
+                                        failBuild = true
+                                        throw new StopActionException()
+                                    }
                                     done = true
                                     break
                                 default:
@@ -244,6 +250,9 @@ class ProfilerPlugin implements Plugin<Project> {
                     nimbleProperties.delete()
                 }
             } catch (StopActionException e) {
+              if (failBuild) {
+                  throw new GradleException("NimbleDroid failing build because of detected issue(s).")
+              }
             } catch (Exception e) {
                 println 'There was a problem with your request.'
                 println 'You can contact support@nimbledroid.com if you need assistance.'
