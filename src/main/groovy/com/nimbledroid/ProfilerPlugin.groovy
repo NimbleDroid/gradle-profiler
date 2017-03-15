@@ -51,18 +51,24 @@ class ProfilerPlugin implements Plugin<Project> {
                     http = new HTTPBuilder(project.nimbledroid.server)
                     checkKey(project)
                     http.auth.basic(project.nimbledroid.apiKey, '')
+                    Project rootProject = project.rootProject
                     String apkPath = null
                     File apk = null
                     File mapping = null
                     File testApk = null
                     Boolean explicitMapping = false
                     if (project.nimbledroid.apkFilename) {
-                        apk = project.file("build/outputs/apk/$project.nimbledroid.apkFilename")
+                        apk = rootProject.file("app/build/outputs/apk/$project.nimbledroid.apkFilename")
                         if (!apk.exists()) {
-                            apk = new File(project.nimbledroid.apkFilename)
-                            if (!apk.exists()) {
+                            if (!project.nimbledroid.apkFilename.contains('/')) {
                                 println "Could not find apk ${apk.getAbsolutePath()}"
                                 ndFailure('apkFilenameError')
+                            } else {
+                                apk = rootProject.file(project.nimbledroid.apkFilename)
+                                if (!apk.exists()) {
+                                    println "Could not find apk ${apk.getAbsolutePath()}"
+                                    ndFailure('apkFilenameError')
+                                }
                             }
                         }
                     } else if (project.hasProperty('android')) {
@@ -91,21 +97,34 @@ class ProfilerPlugin implements Plugin<Project> {
                     }
                     if (project.nimbledroid.mappingUpload) {
                         if (project.nimbledroid.mappingFilename) {
-                            mapping = new File(project.nimbledroid.mappingFilename)
                             explicitMapping = true
-                        }
-                        if (mapping && !mapping.exists()) {
-                            println "Could not find mapping ${mapping.getAbsolutePath()}"
-                            ndFailure('mappingError')
+                            mapping = rootProject.file("app/build/outputs/mapping/$project.nimbledroid.variant/$project.nimbledroid.mappingFilename")
+                            if (!mapping.exists()) {
+                                if (!project.nimbledroid.mappingFilename.contains('/')) {
+                                    println "Could not find mapping ${mapping.getAbsolutePath()}"
+                                    ndFailure('mappingError')
+                                } else {
+                                    mapping = rootProject.file(project.nimbledroid.mappingFilename)
+                                    if (!mapping.exists()) {
+                                        println "Could not find mapping ${mapping.getAbsolutePath()}"
+                                        ndFailure('mappingError')
+                                    }
+                                }
+                            }
                         }
                     }
                     if (project.nimbledroid.testApkFilename) {
-                        testApk = project.file("build/outputs/apk/$project.nimbledroid.testApkFilename")
+                        testApk = rootProject.file("app/build/outputs/apk/$project.nimbledroid.testApkFilename")
                         if (!testApk.exists()) {
-                            testApk = new File(project.nimbledroid.testApkFilename)
-                            if (!testApk.exists()) {
+                            if (!project.nimbledroid.testApkFilename.contains('/')) {
                                 println "Could not find test apk ${testApk.getAbsolutePath()}"
                                 ndFailure('testApkFilenameError')
+                            } else {
+                                testApk = rootProject.file(project.nimbledroid.testApkFilename)
+                                if (!testApk.exists()) {
+                                    println "Could not find test apk ${testApk.getAbsolutePath()}"
+                                    ndFailure('testApkFilenameError')
+                                }
                             }
                         }
                     }
