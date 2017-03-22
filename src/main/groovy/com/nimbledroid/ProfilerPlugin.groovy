@@ -98,7 +98,7 @@ class ProfilerPlugin implements Plugin<Project> {
                     if (project.nimbledroid.mappingUpload) {
                         if (project.nimbledroid.mappingFilename) {
                             explicitMapping = true
-                            mapping = rootProject.file("app/build/outputs/mapping/$project.nimbledroid.variant/$project.nimbledroid.mappingFilename")
+                            mapping = rootProject.file("app/build/outputs/mapping/release/$project.nimbledroid.mappingFilename")
                             if (!mapping.exists()) {
                                 if (!project.nimbledroid.mappingFilename.contains('/')) {
                                     println "Could not find mapping ${mapping.getAbsolutePath()}"
