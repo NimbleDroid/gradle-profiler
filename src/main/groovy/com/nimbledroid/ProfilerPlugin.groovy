@@ -16,14 +16,15 @@ import org.gradle.api.Project
 import org.gradle.api.tasks.StopActionException
 
 class ProfilerPluginExtension {
+    long ndGetProfileTimeout = 1800
+    Boolean mappingUpload = true
     String apiKey = null
-    String variant = 'release'
     String apkFilename = null
     String mappingFilename = null
-    String testApkFilename = null
-    Boolean mappingUpload = true
-    long ndGetProfileTimeout = 1800
     String server = 'https://nimbledroid.com'
+    String testApkFilename = null
+    String uploadLabel = null
+    String variant = 'release'
 }
 
 class AppDataExtension {
@@ -42,7 +43,7 @@ class ProfilerPlugin implements Plugin<Project> {
         project.nimbledroid.extensions.create('appData', AppDataExtension)
 
         nimbleProperties = project.file("$project.rootDir/nimbledroid.properties")
-        nimbleVersion = '1.1.1'
+        nimbleVersion = '1.1.2'
 
         project.task('ndUpload') {
             doLast {
@@ -155,6 +156,9 @@ class ProfilerPlugin implements Plugin<Project> {
                         }
                         if (project.hasProperty('flavor') && project.flavor) {
                             entity.addPart('flavor', new StringBody(project.flavor));
+                        }
+                        if (project.nimbledroid.uploadLabel) {
+                            entity.addPart('upload_label', new StringBody(project.nimbledroid.uploadLabel));
                         }
                         if (project.nimbledroid.hasProperty('appData')) {
                             if (project.nimbledroid.appData.username || project.nimbledroid.appData.password) {
