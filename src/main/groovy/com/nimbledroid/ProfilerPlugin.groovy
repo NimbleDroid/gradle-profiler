@@ -20,11 +20,16 @@ class ProfilerPluginExtension {
     Boolean mappingUpload = true
     String apiKey = null
     String apkFilename = null
+    String deviceConfig = null
     String mappingFilename = null
     String server = 'https://nimbledroid.com'
     String testApkFilename = null
     String uploadLabel = null
     String variant = 'release'
+
+    void deviceConfig(String... devices) {
+        deviceConfig = devices.join(',')
+    }
 }
 
 class AppDataExtension {
@@ -43,7 +48,7 @@ class ProfilerPlugin implements Plugin<Project> {
         project.nimbledroid.extensions.create('appData', AppDataExtension)
 
         nimbleProperties = project.file("$project.rootDir/nimbledroid.properties")
-        nimbleVersion = '1.1.2'
+        nimbleVersion = '1.1.3'
 
         project.task('ndUpload') {
             doLast {
@@ -159,6 +164,9 @@ class ProfilerPlugin implements Plugin<Project> {
                         }
                         if (project.nimbledroid.uploadLabel) {
                             entity.addPart('upload_label', new StringBody(project.nimbledroid.uploadLabel));
+                        }
+                        if (project.nimbledroid.deviceConfig) {
+                            entity.addPart('device_config', new StringBody(project.nimbledroid.deviceConfig));
                         }
                         if (project.nimbledroid.hasProperty('appData')) {
                             if (project.nimbledroid.appData.username || project.nimbledroid.appData.password) {
