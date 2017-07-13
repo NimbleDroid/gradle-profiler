@@ -61,11 +61,9 @@ class ProfilerPlugin implements Plugin<Project> {
                     checkKey(project)
                     http.auth.basic(nimbledroid.apiKey, '')
                     Project rootProject = project.rootProject
-                    String apkPath = null
                     File apk = null
                     File mapping = null
                     File testApk = null
-                    Boolean explicitMapping = false
                     if (nimbledroid.apkFilename) {
                         apk = rootProject.file("app/build/outputs/apk/$nimbledroid.apkFilename")
                         if (!apk.exists()) {
@@ -80,46 +78,53 @@ class ProfilerPlugin implements Plugin<Project> {
                                 }
                             }
                         }
+                        println "apkFilename set in build.gradle, uploading apk ${apk.getAbsolutePath()}"
                     } else if (project.hasProperty('android')) {
                         project.android.applicationVariants.all { variant ->
                             variant.outputs.each { output ->
                                 if (variant.name == nimbledroid.variant) {
-                                    apkPath = output.outputFile
+                                    apk = output.getOutputFile()
                                     if (nimbledroid.mappingUpload) {
                                         mapping = variant.getMappingFile()
                                     }
                                 }
                             }
                         }
-                        if (apkPath == null) {
+                        if (!apk) {
                             println "No variant named $nimbledroid.variant"
                             ndError('variantNameError')
                         }
-                        apk = project.file(apkPath)
                         if (!apk.exists()) {
-                            println "No apk exists for variant $nimbledroid.variant"
+                            println "Could not find variant $nimbledroid.variant apk ${apk.getAbsolutePath()}"
                             ndError('variantApkError')
                         }
+                        println "variant $nimbledroid.variant found, uploading apk ${apk.getAbsolutePath()}"
                     } else {
                         println 'The NimbleDroid plugin requires either an android code block or the definition of an apkFilename in build.gradle.'
                         ndError('androidError')
                     }
                     if (nimbledroid.mappingUpload) {
                         if (nimbledroid.mappingFilename) {
-                            explicitMapping = true
                             mapping = rootProject.file("app/build/outputs/mapping/release/$nimbledroid.mappingFilename")
                             if (!mapping.exists()) {
                                 if (!nimbledroid.mappingFilename.contains('/')) {
-                                    println "Could not find mapping ${mapping.getAbsolutePath()}"
-                                    ndError('mappingError')
+                                    println "Could not find Proguard mapping ${mapping.getAbsolutePath()}"
+                                    ndError('mappingFilenameError')
                                 } else {
                                     mapping = rootProject.file(nimbledroid.mappingFilename)
                                     if (!mapping.exists()) {
-                                        println "Could not find mapping ${mapping.getAbsolutePath()}"
-                                        ndError('mappingError')
+                                        println "Could not find Proguard mapping ${mapping.getAbsolutePath()}"
+                                        ndError('mappingFilenameError')
                                     }
                                 }
                             }
+                            println "mappingFilename set in build.gradle, uploading ProGuard mapping ${mapping.getAbsolutePath()}"
+                        } else if (mapping) {
+                            if (!mapping.exists()) {
+                                println "Could not find variant $nimbledroid.variant ProGuard mapping ${mapping.getAbsolutePath()}"
+                                ndError('variantMappingError')
+                            }
+                            println "ProGuard enabled in build.gradle, uploading ProGuard mapping ${mapping.getAbsolutePath()}"
                         }
                     }
                     if (nimbledroid.testApkFilename) {
@@ -136,6 +141,7 @@ class ProfilerPlugin implements Plugin<Project> {
                                 }
                             }
                         }
+                        println "testApkFilename set in build.gradle, uploading test apk ${testApk.getAbsolutePath()}"
                     }
                     String errorMessage = null
                     http.request(POST, JSON) { req ->
@@ -148,7 +154,6 @@ class ProfilerPlugin implements Plugin<Project> {
                         if (mapping) {
                             entity.addPart('mapping', new FileBody(mapping))
                             entity.addPart('has_mapping', new StringBody('true'))
-                            println "${explicitMapping ? 'mappingFilename set' : 'ProGuard enabled'} in build.gradle, uploading ProGuard mapping ${mapping.getAbsolutePath()}"
                         }
                         if (testApk) {
                             entity.addPart('test_apk', new FileBody(testApk))
@@ -312,7 +317,7 @@ class ProfilerPlugin implements Plugin<Project> {
     }
 
     void checkKey(Project project) {
-        if (nimbledroid.apiKey == null) {
+        if (!nimbledroid.apiKey) {
             println 'Must set nimbledroid.apiKey'
             ndError('nullKeyError')
         }
