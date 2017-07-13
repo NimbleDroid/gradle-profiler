@@ -98,7 +98,7 @@ class ProfilerPlugin implements Plugin<Project> {
                             println "Could not find variant $nimbledroid.variant apk ${apk.getAbsolutePath()}"
                             ndError('variantApkError')
                         }
-                        println "variant $nimbledroid.variant found, uploading apk ${apk.getAbsolutePath()}"
+                        println "Variant $nimbledroid.variant found, uploading apk ${apk.getAbsolutePath()}"
                     } else {
                         println 'The NimbleDroid plugin requires either an android code block or the definition of an apkFilename in build.gradle.'
                         ndError('androidError')
