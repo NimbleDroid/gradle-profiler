@@ -71,12 +71,12 @@ class ProfilerPlugin implements Plugin<Project> {
                         if (!apk.exists()) {
                             if (!nimbledroid.apkFilename.contains('/')) {
                                 println "Could not find apk ${apk.getAbsolutePath()}"
-                                ndFailure('apkFilenameError')
+                                ndError('apkFilenameError')
                             } else {
                                 apk = rootProject.file(nimbledroid.apkFilename)
                                 if (!apk.exists()) {
                                     println "Could not find apk ${apk.getAbsolutePath()}"
-                                    ndFailure('apkFilenameError')
+                                    ndError('apkFilenameError')
                                 }
                             }
                         }
@@ -93,16 +93,16 @@ class ProfilerPlugin implements Plugin<Project> {
                         }
                         if (apkPath == null) {
                             println "No variant named $nimbledroid.variant"
-                            ndFailure('variantNameError')
+                            ndError('variantNameError')
                         }
                         apk = project.file(apkPath)
                         if (!apk.exists()) {
                             println "No apk exists for variant $nimbledroid.variant"
-                            ndFailure('variantApkError')
+                            ndError('variantApkError')
                         }
                     } else {
                         println 'The NimbleDroid plugin requires either an android code block or the definition of an apkFilename in build.gradle.'
-                        ndFailure('androidError')
+                        ndError('androidError')
                     }
                     if (nimbledroid.mappingUpload) {
                         if (nimbledroid.mappingFilename) {
@@ -111,12 +111,12 @@ class ProfilerPlugin implements Plugin<Project> {
                             if (!mapping.exists()) {
                                 if (!nimbledroid.mappingFilename.contains('/')) {
                                     println "Could not find mapping ${mapping.getAbsolutePath()}"
-                                    ndFailure('mappingError')
+                                    ndError('mappingError')
                                 } else {
                                     mapping = rootProject.file(nimbledroid.mappingFilename)
                                     if (!mapping.exists()) {
                                         println "Could not find mapping ${mapping.getAbsolutePath()}"
-                                        ndFailure('mappingError')
+                                        ndError('mappingError')
                                     }
                                 }
                             }
@@ -127,12 +127,12 @@ class ProfilerPlugin implements Plugin<Project> {
                         if (!testApk.exists()) {
                             if (!nimbledroid.testApkFilename.contains('/')) {
                                 println "Could not find test apk ${testApk.getAbsolutePath()}"
-                                ndFailure('testApkFilenameError')
+                                ndError('testApkFilenameError')
                             } else {
                                 testApk = rootProject.file(nimbledroid.testApkFilename)
                                 if (!testApk.exists()) {
                                     println "Could not find test apk ${testApk.getAbsolutePath()}"
-                                    ndFailure('testApkFilenameError')
+                                    ndError('testApkFilenameError')
                                 }
                             }
                         }
@@ -205,13 +205,14 @@ class ProfilerPlugin implements Plugin<Project> {
                         }
                     }
                     if (errorMessage) {
-                        ndFailure(errorMessage)
+                        ndError(errorMessage)
                     }
                 } catch (StopActionException e) {
-                } catch (Exception e) {
-                    println 'There was a problem with your request.'
-                    println 'You can contact support@nimbledroid.com if you need assistance.'
-                    ndFailure(e.getMessage())
+                    if (nimbledroid.failBuildOnPluginError) {
+                        throw new GradleException("failBuildOnPluginError is set, NimbleDroid failing build because of plugin error.")
+                    }
+                } catch (Exception exception) {
+                    ndException(exception)
                 }
             }
         }
@@ -225,7 +226,7 @@ class ProfilerPlugin implements Plugin<Project> {
                     checkKey(project)
                     if (!nimbleProperties.exists()) {
                         println "Couldn\'t find nimbledroid.properties file, ndUpload task was either not run or failed."
-                        ndFailure('propertiesError')
+                        ndError('propertiesError')
                     }
                     http.auth.basic(nimbledroid.apiKey, '')
                     Boolean done = false
@@ -281,19 +282,20 @@ class ProfilerPlugin implements Plugin<Project> {
                         }
                     }
                     if (errorMessage) {
-                        ndFailure(errorMessage)
+                        ndError(errorMessage)
                     }
                     if (nimbleProperties.exists()) {
                         nimbleProperties.delete()
                     }
                 } catch (StopActionException e) {
-                  if (failBuildOnIssue) {
-                      throw new GradleException("NimbleDroid failing build because of detected issue(s).")
-                  }
-                } catch (Exception e) {
-                    println 'There was a problem with your request.'
-                    println 'You can contact support@nimbledroid.com if you need assistance.'
-                    ndFailure(e.getMessage())
+                    if (failBuildOnIssue) {
+                        throw new GradleException("NimbleDroid failing build because of detected issue(s).")
+                    }
+                    if (nimbledroid.failBuildOnPluginError) {
+                        throw new GradleException("failBuildOnPluginError is set, NimbleDroid failing build because of plugin error.")
+                    }
+                } catch (Exception exception) {
+                    ndException(exeption)
                 }
             }
         }
@@ -312,11 +314,11 @@ class ProfilerPlugin implements Plugin<Project> {
     void checkKey(Project project) {
         if (nimbledroid.apiKey == null) {
             println 'Must set nimbledroid.apiKey'
-            ndFailure('nullKeyError')
+            ndError('nullKeyError')
         }
     }
 
-    void ndFailure(String errorMessage) {
+    void logError(String errorMessage) {
         try {
             if (nimbleProperties.exists()) {
                 nimbleProperties.delete()
@@ -330,10 +332,20 @@ class ProfilerPlugin implements Plugin<Project> {
                 }
             }
         } catch (Exception e) {}
+    }
+
+    void ndError(String errorMessage) {
+        logError(errorMessage)
+        throw new StopActionException()
+    }
+
+    void ndException(Exception exception) {
+        logError(exception.getMessage())
+        exception.printStackTrace()
+        println 'There was a problem with your request.'
+        println 'You can contact support@nimbledroid.com if you need assistance.'
         if (nimbledroid.failBuildOnPluginError) {
             throw new GradleException("failBuildOnPluginError is set, NimbleDroid failing build because of plugin error.")
-        } else {
-            throw new StopActionException()
         }
     }
 
