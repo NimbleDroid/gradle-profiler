@@ -6,7 +6,7 @@ apply plugin: 'groovy'
 apply plugin: 'maven'
 
 group = 'com.nimbledroid'
-version = '1.1.3'
+version = '1.1.4'
 
 repositories {
     mavenCentral()
