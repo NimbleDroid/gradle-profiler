@@ -24,12 +24,16 @@ class ProfilerPluginExtension {
     String deviceConfig = null
     String mappingFilename = null
     String server = 'https://nimbledroid.com'
+    String scenarios = null
     String testApkFilename = null
     String uploadLabel = null
     String variant = 'release'
 
     void deviceConfig(String... devices) {
         deviceConfig = devices.join(',')
+    }
+    void scenarios(String... scenarioNames) {
+        scenarios = scenarioNames.join(',')
     }
 }
 
@@ -51,7 +55,7 @@ class ProfilerPlugin implements Plugin<Project> {
         nimbledroid.extensions.create('appData', AppDataExtension)
 
         nimbleProperties = project.file("$project.rootDir/nimbledroid.properties")
-        nimbleVersion = '1.1.4'
+        nimbleVersion = '1.1.5'
 
         project.task('ndUpload') {
             doLast {
@@ -64,6 +68,7 @@ class ProfilerPlugin implements Plugin<Project> {
                     File apk = null
                     File mapping = null
                     File testApk = null
+                    Map apiParams = [:]
                     if (nimbledroid.apkFilename) {
                         apk = rootProject.file("app/build/outputs/apk/$nimbledroid.apkFilename")
                         if (!apk.exists()) {
@@ -143,6 +148,17 @@ class ProfilerPlugin implements Plugin<Project> {
                         }
                         println "testApkFilename set in build.gradle, uploading test apk ${testApk.getAbsolutePath()}"
                     }
+                    project.properties.each { property, value ->
+                        if (property.startsWith('nd') && value instanceof String) {
+                            property = property.substring(2).replaceAll(/\b[A-Z]/) { it.toLowerCase() }
+                            if (nimbledroid.hasProperty(property)) {
+                                nimbledroid."$property" = value
+                            } else {
+                                property = property.replaceAll(/\B[A-Z]/) { '_' + it }.toLowerCase()
+                                apiParams[property] = value
+                            }
+                        }
+                    }
                     String errorMessage = null
                     http.request(POST, JSON) { req ->
                         uri.path = '/api/v2/apks'
@@ -161,30 +177,38 @@ class ProfilerPlugin implements Plugin<Project> {
                         try {
                             String commitHash = 'git rev-parse HEAD'.execute().text.trim()
                             if (commitHash) {
-                                entity.addPart('commit', new StringBody(commitHash));
+                                entity.addPart('commit', new StringBody(commitHash))
                             }
                         } catch (IOException e) {}
                         if (project.hasProperty('branch') && project.branch) {
-                            entity.addPart('branch', new StringBody(project.branch));
+                            entity.addPart('branch', new StringBody(project.branch))
                         }
                         if (project.hasProperty('flavor') && project.flavor) {
-                            entity.addPart('flavor', new StringBody(project.flavor));
-                        }
-                        if (nimbledroid.uploadLabel) {
-                            entity.addPart('upload_label', new StringBody(nimbledroid.uploadLabel));
+                            entity.addPart('flavor', new StringBody(project.flavor))
                         }
                         if (nimbledroid.deviceConfig) {
-                            entity.addPart('device_config', new StringBody(nimbledroid.deviceConfig));
+                            entity.addPart('device_config', new StringBody(nimbledroid.deviceConfig))
+                        }
+                        if (nimbledroid.scenarios) {
+                            entity.addPart('scenarios', new StringBody(nimbledroid.scenarios))
+                        }
+                        if (nimbledroid.uploadLabel) {
+                            entity.addPart('upload_label', new StringBody(nimbledroid.uploadLabel))
                         }
                         if (nimbledroid.hasProperty('appData')) {
                             if (nimbledroid.appData.username || nimbledroid.appData.password) {
-                                entity.addPart('auto_login', new StringBody('true'));
+                                entity.addPart('auto_login', new StringBody('true'))
                             }
                             if (nimbledroid.appData.username) {
-                                entity.addPart('username', new StringBody(nimbledroid.appData.username));
+                                entity.addPart('username', new StringBody(nimbledroid.appData.username))
                             }
                             if (nimbledroid.appData.password) {
-                                entity.addPart('password', new StringBody(nimbledroid.appData.password));
+                                entity.addPart('password', new StringBody(nimbledroid.appData.password))
+                            }
+                        }
+                        apiParams.each { parameter, value ->
+                            if (value) {
+                                entity.addPart(parameter, new StringBody(value))
                             }
                         }
                         req.entity = entity
@@ -198,10 +222,21 @@ class ProfilerPlugin implements Plugin<Project> {
                                 nimbleProperties.append('\n')
                             }
                         }
+                        response.'400' = { resp, reader ->
+                            if (reader.message) {
+                                reader.message.each { message ->
+                                    println message
+                                }
+                            } else {
+                                println "There was a problem reaching the NimbleDroid service ($nimbledroid.server$uri.path)."
+                            }
+                            println 'You can contact support@nimbledroid.com if you need assistance.'
+                            errorMessage = 'badRequestError'
+                        }
                         response.'401' = { resp ->
-                              println "Invalid API key, visit $nimbledroid.server/account to retrieve the current key."
-                              println 'You can contact support@nimbledroid.com if you need assistance.'
-                              errorMessage = 'invalidKeyError'
+                            println "Invalid API key, visit $nimbledroid.server/account to retrieve the current key."
+                            println 'You can contact support@nimbledroid.com if you need assistance.'
+                            errorMessage = 'invalidKeyError'
                         }
                         response.failure = { resp ->
                             println "There was a problem reaching the NimbleDroid service ($nimbledroid.server$uri.path)."
