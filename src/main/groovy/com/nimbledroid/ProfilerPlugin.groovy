@@ -16,6 +16,7 @@ import org.gradle.api.Project
 import org.gradle.api.tasks.StopActionException
 
 class ProfilerPluginExtension {
+    long findApkTimeout = 0
     long ndGetProfileTimeout = 1800
     Boolean failBuildOnPluginError = false
     Boolean mappingUpload = true
@@ -55,7 +56,7 @@ class ProfilerPlugin implements Plugin<Project> {
         nimbledroid.extensions.create('appData', AppDataExtension)
 
         nimbleProperties = project.file("$project.rootDir/nimbledroid.properties")
-        nimbleVersion = '1.1.5'
+        nimbleVersion = '1.1.6'
 
         project.task('ndUpload') {
             doLast {
@@ -69,44 +70,112 @@ class ProfilerPlugin implements Plugin<Project> {
                     File mapping = null
                     File testApk = null
                     Map apiParams = [:]
-                    if (nimbledroid.apkFilename) {
-                        apk = rootProject.file("app/build/outputs/apk/$nimbledroid.apkFilename")
-                        if (!apk.exists()) {
-                            if (!nimbledroid.apkFilename.contains('/')) {
-                                println "Could not find apk ${apk.getAbsolutePath()}"
-                                ndError('apkFilenameError')
-                            } else {
-                                apk = rootProject.file(nimbledroid.apkFilename)
+                    if (nimbledroid.findApkTimeout) {
+                        long timeout = System.nanoTime() + TimeUnit.NANOSECONDS.convert(nimbledroid.findApkTimeout, TimeUnit.SECONDS)
+                        while (!apk || !apk.exists()) {
+                            if (nimbledroid.apkFilename) {
+                                apk = rootProject.file("app/build/outputs/apk/$nimbledroid.apkFilename")
                                 if (!apk.exists()) {
-                                    println "Could not find apk ${apk.getAbsolutePath()}"
-                                    ndError('apkFilenameError')
+                                    if (!nimbledroid.apkFilename.contains('/')) {
+                                        println "Could not find apk ${apk.getAbsolutePath()}"
+                                        if (timeout > System.nanoTime()) {
+                                            println "Will continue trying for ${timeRemaining(timeout)} seconds"
+                                        } else {
+                                            ndError('apkFilenameError')
+                                        }
+                                    } else {
+                                        apk = rootProject.file(nimbledroid.apkFilename)
+                                        if (!apk.exists()) {
+                                            println "Could not find apk ${apk.getAbsolutePath()}"
+                                            if (timeout > System.nanoTime()) {
+                                                println "Will continue trying for ${timeRemaining(timeout)} seconds"
+                                            } else {
+                                                ndError('apkFilenameError')
+                                            }
+                                        }
+                                    }
                                 }
+                                if (apk.exists()) {
+                                    println "apkFilename set in build.gradle, uploading apk ${apk.getAbsolutePath()}"
+                                }
+                            } else if (project.hasProperty('android')) {
+                                project.android.applicationVariants.all { variant ->
+                                    variant.outputs.each { output ->
+                                        if (variant.name == nimbledroid.variant) {
+                                            apk = output.getOutputFile()
+                                            if (nimbledroid.mappingUpload) {
+                                                mapping = variant.getMappingFile()
+                                            }
+                                        }
+                                    }
+                                }
+                                if (!apk) {
+                                    println "No variant named $nimbledroid.variant"
+                                    if (timeout > System.nanoTime()) {
+                                        println "Will continue trying for ${timeRemaining(timeout)} seconds"
+                                    } else {
+                                        ndError('variantNameError')
+                                    }
+                                }
+                                if (!apk.exists()) {
+                                    println "Could not find variant $nimbledroid.variant apk ${apk.getAbsolutePath()}"
+                                    if (timeout > System.nanoTime()) {
+                                        println "Will continue trying for ${timeRemaining(timeout)} seconds"
+                                    } else {
+                                        ndError('variantApkError')
+                                    }
+                                }
+                                if (apk && apk.exists()) {
+                                    println "Variant $nimbledroid.variant found, uploading apk ${apk.getAbsolutePath()}"
+                                }
+                            } else {
+                                println 'The NimbleDroid plugin requires either an android code block or the definition of an apkFilename in build.gradle.'
+                                ndError('androidError')
+                            }
+                            if (!apk || !apk.exists()) {
+                                sleep(5000)
                             }
                         }
-                        println "apkFilename set in build.gradle, uploading apk ${apk.getAbsolutePath()}"
-                    } else if (project.hasProperty('android')) {
-                        project.android.applicationVariants.all { variant ->
-                            variant.outputs.each { output ->
-                                if (variant.name == nimbledroid.variant) {
-                                    apk = output.getOutputFile()
-                                    if (nimbledroid.mappingUpload) {
-                                        mapping = variant.getMappingFile()
+                    } else {
+                        if (nimbledroid.apkFilename) {
+                            apk = rootProject.file("app/build/outputs/apk/$nimbledroid.apkFilename")
+                            if (!apk.exists()) {
+                                if (!nimbledroid.apkFilename.contains('/')) {
+                                    println "Could not find apk ${apk.getAbsolutePath()}"
+                                    ndError('apkFilenameError')
+                                } else {
+                                    apk = rootProject.file(nimbledroid.apkFilename)
+                                    if (!apk.exists()) {
+                                        println "Could not find apk ${apk.getAbsolutePath()}"
+                                        ndError('apkFilenameError')
                                     }
                                 }
                             }
+                            println "apkFilename set in build.gradle, uploading apk ${apk.getAbsolutePath()}"
+                        } else if (project.hasProperty('android')) {
+                            project.android.applicationVariants.all { variant ->
+                                variant.outputs.each { output ->
+                                    if (variant.name == nimbledroid.variant) {
+                                        apk = output.getOutputFile()
+                                        if (nimbledroid.mappingUpload) {
+                                            mapping = variant.getMappingFile()
+                                        }
+                                    }
+                                }
+                            }
+                            if (!apk) {
+                                println "No variant named $nimbledroid.variant"
+                                ndError('variantNameError')
+                            }
+                            if (!apk.exists()) {
+                                println "Could not find variant $nimbledroid.variant apk ${apk.getAbsolutePath()}"
+                                ndError('variantApkError')
+                            }
+                            println "Variant $nimbledroid.variant found, uploading apk ${apk.getAbsolutePath()}"
+                        } else {
+                            println 'The NimbleDroid plugin requires either an android code block or the definition of an apkFilename in build.gradle.'
+                            ndError('androidError')
                         }
-                        if (!apk) {
-                            println "No variant named $nimbledroid.variant"
-                            ndError('variantNameError')
-                        }
-                        if (!apk.exists()) {
-                            println "Could not find variant $nimbledroid.variant apk ${apk.getAbsolutePath()}"
-                            ndError('variantApkError')
-                        }
-                        println "Variant $nimbledroid.variant found, uploading apk ${apk.getAbsolutePath()}"
-                    } else {
-                        println 'The NimbleDroid plugin requires either an android code block or the definition of an apkFilename in build.gradle.'
-                        ndError('androidError')
                     }
                     if (nimbledroid.mappingUpload) {
                         if (nimbledroid.mappingFilename) {
@@ -356,6 +425,10 @@ class ProfilerPlugin implements Plugin<Project> {
             println 'Must set nimbledroid.apiKey'
             ndError('nullKeyError')
         }
+    }
+
+    long timeRemaining(long timeout) {
+        TimeUnit.SECONDS.convert(timeout - System.nanoTime(), TimeUnit.NANOSECONDS)
     }
 
     void logError(String errorMessage) {
