@@ -56,7 +56,7 @@ class ProfilerPlugin implements Plugin<Project> {
         nimbledroid.extensions.create('appData', AppDataExtension)
 
         nimbleProperties = project.file("$project.rootDir/nimbledroid.properties")
-        nimbleVersion = '1.1.7'
+        nimbleVersion = '1.1.8'
 
         project.task('ndUpload') {
             doLast {
@@ -228,6 +228,7 @@ class ProfilerPlugin implements Plugin<Project> {
                             }
                         }
                     }
+                    StringBuilder errorBuilder = new StringBuilder()
                     String errorMessage = null
                     http.request(POST, JSON) { req ->
                         uri.path = '/api/v2/apks'
@@ -291,26 +292,14 @@ class ProfilerPlugin implements Plugin<Project> {
                                 nimbleProperties.append('\n')
                             }
                         }
-                        response.'400' = { resp, reader ->
-                            if (reader.message) {
-                                reader.message.each { message ->
-                                    println message
-                                }
-                            } else {
-                                println "There was a problem reaching the NimbleDroid service ($nimbledroid.server$uri.path)."
+                        response.failure = { resp, reader ->
+                            errorBuilder.append("Request to NimbleDroid service ($nimbledroid.server$uri.path) failed with status $resp.statusLine.\n")
+                            if (reader) {
+                                errorBuilder.append("Server Message: $reader\n")
                             }
-                            println 'You can contact support@nimbledroid.com if you need assistance.'
-                            errorMessage = 'badRequestError'
-                        }
-                        response.'401' = { resp ->
-                            println "Invalid API key, visit $nimbledroid.server/account to retrieve the current key."
-                            println 'You can contact support@nimbledroid.com if you need assistance.'
-                            errorMessage = 'invalidKeyError'
-                        }
-                        response.failure = { resp ->
-                            println "There was a problem reaching the NimbleDroid service ($nimbledroid.server$uri.path)."
-                            println 'You can contact support@nimbledroid.com if you need assistance.'
-                            errorMessage = 'requestError'
+                            errorBuilder.append('You can contact support@nimbledroid.com if you need assistance.')
+                            errorMessage = errorBuilder
+                            println errorMessage
                         }
                     }
                     if (errorMessage) {
@@ -346,6 +335,7 @@ class ProfilerPlugin implements Plugin<Project> {
                         uriPath = url.getPath()
                     } catch (MalformedURLException e) {}
                     long timeout = System.nanoTime() + TimeUnit.NANOSECONDS.convert(nimbledroid.ndGetProfileTimeout, TimeUnit.SECONDS)
+                    StringBuilder errorBuilder = new StringBuilder()
                     String errorMessage = null
                     while (!done) {
                         http.request(GET) { req ->
@@ -364,8 +354,10 @@ class ProfilerPlugin implements Plugin<Project> {
                                         break
                                     default:
                                         if (timeout < System.nanoTime()) {
-                                            println 'Profiling timed out'
-                                            errorMessage = 'timeoutError'
+                                            errorBuilder.append('NimbleDroid Gradle Plugin timed out.\n')
+                                            errorBuilder.append('You can contact support@nimbledroid.com if you need assistance.')
+                                            errorMessage = errorBuilder
+                                            println errorMessage
                                             done = true
                                         } else {
                                             println reader.console_message
@@ -373,17 +365,15 @@ class ProfilerPlugin implements Plugin<Project> {
                                         break
                                 }
                             }
-                            response.failure = { resp ->
-                                println 'There was a problem parsing the profile response.'
-                                println 'You can contact support@nimbledroid.com if you need assistance.'
-                                errorMessage = 'requestError'
+                            response.failure = { resp, reader ->
+                                errorBuilder.append("Request to NimbleDroid service ($nimbledroid.server$uri.path) failed with status $resp.statusLine\n")
+                                if (reader) {
+                                    errorBuilder.append("Server Message: $reader\n")
+                                }
+                                errorBuilder.append('You can contact support@nimbledroid.com if you need assistance.')
+                                errorMessage = errorBuilder
+                                println errorMessage
                                 done = true
-                            }
-                            response.'401' = { resp ->
-                                  println "Invalid API key, visit $nimbledroid.server/account to retrieve the current key."
-                                  println 'You can contact support@nimbledroid.com if you need assistance.'
-                                  errorMessage = 'invalidKeyError'
-                                  done = true
                             }
                         }
                         if (!done) {
