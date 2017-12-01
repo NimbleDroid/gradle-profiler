@@ -292,37 +292,11 @@ class ProfilerPlugin implements Plugin<Project> {
                                 nimbleProperties.append('\n')
                             }
                         }
-                        response.'400' = { resp, reader ->
+                        response.failure = { resp, reader ->
                             errorBuilder.append("Request to NimbleDroid service ($nimbledroid.server$uri.path) failed with status $resp.statusLine.\n")
-                            if (reader.message) {
-                                reader.message.each { message ->
-                                    errorBuilder.append("$message\n")
-                                }
+                            if (reader) {
+                                errorBuilder.append("Server Message: $reader\n")
                             }
-                            errorBuilder.append('You can contact support@nimbledroid.com if you need assistance.')
-                            errorMessage = errorBuilder
-                            println errorMessage
-                        }
-                        response.'401' = { resp ->
-                            errorBuilder.append("Request to NimbleDroid service ($nimbledroid.server$uri.path) failed with status $resp.statusLine.\n")
-                            errorBuilder.append("Invalid API key, visit $nimbledroid.server/account to retrieve the current key.\n")
-                            errorBuilder.append('You can contact support@nimbledroid.com if you need assistance.')
-                            errorMessage = errorBuilder
-                            println errorMessage
-                        }
-                        response.'403' = { resp, reader ->
-                            errorBuilder.append("Request to NimbleDroid service ($nimbledroid.server$uri.path) failed with status $resp.statusLine.\n")
-                            if (reader.message) {
-                                reader.message.each { message ->
-                                    errorBuilder.append("$message\n")
-                                }
-                            }
-                            errorBuilder.append('You can contact support@nimbledroid.com if you need assistance.')
-                            errorMessage = errorBuilder
-                            println errorMessage
-                        }
-                        response.failure = { resp ->
-                            errorBuilder.append("Request to NimbleDroid service ($nimbledroid.server$uri.path) failed with status $resp.statusLine.\n")
                             errorBuilder.append('You can contact support@nimbledroid.com if you need assistance.')
                             errorMessage = errorBuilder
                             println errorMessage
@@ -391,16 +365,11 @@ class ProfilerPlugin implements Plugin<Project> {
                                         break
                                 }
                             }
-                            response.'401' = { resp ->
+                            response.failure = { resp, reader ->
                                 errorBuilder.append("Request to NimbleDroid service ($nimbledroid.server$uri.path) failed with status $resp.statusLine\n")
-                                errorBuilder.append("Invalid API key, visit $nimbledroid.server/account to retrieve the current key.\n")
-                                errorBuilder.append('You can contact support@nimbledroid.com if you need assistance.')
-                                errorMessage = errorBuilder
-                                println errorMessage
-                                done = true
-                            }
-                            response.failure = { resp ->
-                                errorBuilder.append("Request to NimbleDroid service ($nimbledroid.server$uri.path) failed with status $resp.statusLine\n")
+                                if (reader) {
+                                    errorBuilder.append("Server Message: $reader\n")
+                                }
                                 errorBuilder.append('You can contact support@nimbledroid.com if you need assistance.')
                                 errorMessage = errorBuilder
                                 println errorMessage
