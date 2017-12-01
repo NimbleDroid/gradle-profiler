@@ -310,6 +310,17 @@ class ProfilerPlugin implements Plugin<Project> {
                             errorMessage = errorBuilder
                             println errorMessage
                         }
+                        response.'403' = { resp, reader ->
+                            errorBuilder.append("Request to NimbleDroid service ($nimbledroid.server$uri.path) failed with status $resp.statusLine.\n")
+                            if (reader.message) {
+                                reader.message.each { message ->
+                                    errorBuilder.append("$message\n")
+                                }
+                            }
+                            errorBuilder.append('You can contact support@nimbledroid.com if you need assistance.')
+                            errorMessage = errorBuilder
+                            println errorMessage
+                        }
                         response.failure = { resp ->
                             errorBuilder.append("Request to NimbleDroid service ($nimbledroid.server$uri.path) failed with status $resp.statusLine.\n")
                             errorBuilder.append('You can contact support@nimbledroid.com if you need assistance.')
