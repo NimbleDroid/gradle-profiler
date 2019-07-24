@@ -396,7 +396,7 @@ class ProfilerPlugin implements Plugin<Project> {
                         throw new GradleException("failBuildOnPluginError is set, NimbleDroid failing build because of plugin error.")
                     }
                 } catch (Exception exception) {
-                    ndException(exeption)
+                    ndException(exception)
                 }
             }
         }
