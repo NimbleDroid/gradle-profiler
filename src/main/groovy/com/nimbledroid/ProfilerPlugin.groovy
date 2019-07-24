@@ -56,7 +56,7 @@ class ProfilerPlugin implements Plugin<Project> {
         nimbledroid.extensions.create('appData', AppDataExtension)
 
         nimbleProperties = project.file("$project.rootDir/nimbledroid.properties")
-        nimbleVersion = '1.1.8'
+        nimbleVersion = '1.2.0'
 
         project.task('ndUpload') {
             doLast {
@@ -100,9 +100,10 @@ class ProfilerPlugin implements Plugin<Project> {
                                 }
                             } else if (project.hasProperty('android')) {
                                 project.android.applicationVariants.all { variant ->
-                                    variant.outputs.each { output ->
-                                        if (variant.name == nimbledroid.variant) {
-                                            apk = output.getOutputFile()
+                                    if (variant.name == nimbledroid.variant) {
+                                        variant.getPackageApplicationProvider().get().outputScope.getApkDatas().each { apkData ->
+                                            apk = new File(variant.getPackageApplicationProvider().get().outputs.files.last(), apkData.getOutputFileName())
+                                            println 'apk: ' + apk
                                             if (nimbledroid.mappingUpload) {
                                                 mapping = variant.getMappingFile()
                                             }
@@ -154,9 +155,10 @@ class ProfilerPlugin implements Plugin<Project> {
                             println "apkFilename set in build.gradle, uploading apk ${apk.getAbsolutePath()}"
                         } else if (project.hasProperty('android')) {
                             project.android.applicationVariants.all { variant ->
-                                variant.outputs.each { output ->
-                                    if (variant.name == nimbledroid.variant) {
-                                        apk = output.getOutputFile()
+                                if (variant.name == nimbledroid.variant) {
+                                    variant.getPackageApplicationProvider().get().outputScope.getApkDatas().each { apkData ->
+                                        apk = new File(variant.getPackageApplicationProvider().get().outputs.files.last(), apkData.getOutputFileName())
+                                        println 'apk: ' + apk
                                         if (nimbledroid.mappingUpload) {
                                             mapping = variant.getMappingFile()
                                         }
@@ -394,19 +396,16 @@ class ProfilerPlugin implements Plugin<Project> {
                         throw new GradleException("failBuildOnPluginError is set, NimbleDroid failing build because of plugin error.")
                     }
                 } catch (Exception exception) {
-                    ndException(exeption)
+                    ndException(exception)
                 }
             }
         }
 
         project.task('ndProfile') {
-            doLast {
-                checkKey(project)
-                project.ndUpload.execute()
-                if (nimbleProperties.exists()) {
-                    project.ndGetProfile.execute()
-                }
+            project.ndGetProfile.configure {
+                dependsOn project.ndUpload
             }
+            dependsOn project.ndGetProfile
         }
     }
 
