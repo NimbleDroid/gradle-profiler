@@ -56,7 +56,7 @@ class ProfilerPlugin implements Plugin<Project> {
         nimbledroid.extensions.create('appData', AppDataExtension)
 
         nimbleProperties = project.file("$project.rootDir/nimbledroid.properties")
-        nimbleVersion = '1.2.0'
+        nimbleVersion = '1.2.1'
 
         project.task('ndUpload') {
             doLast {
@@ -318,6 +318,7 @@ class ProfilerPlugin implements Plugin<Project> {
         }
 
         project.task('ndGetProfile') {
+            mustRunAfter project.ndUpload
             doLast {
                 Boolean failBuildOnIssue = false
                 try {
@@ -402,10 +403,7 @@ class ProfilerPlugin implements Plugin<Project> {
         }
 
         project.task('ndProfile') {
-            project.ndGetProfile.configure {
-                dependsOn project.ndUpload
-            }
-            dependsOn project.ndGetProfile
+            dependsOn project.ndUpload, project.ndGetProfile
         }
     }
 
