@@ -402,9 +402,6 @@ class ProfilerPlugin implements Plugin<Project> {
         }
 
         project.task('ndProfile') {
-            project.ndGetProfile.configure {
-                dependsOn project.ndUpload
-            }
             dependsOn project.ndGetProfile
         }
     }
