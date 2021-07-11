@@ -101,12 +101,9 @@ class ProfilerPlugin implements Plugin<Project> {
                             } else if (project.hasProperty('android')) {
                                 project.android.applicationVariants.all { variant ->
                                     if (variant.name == nimbledroid.variant) {
-                                        variant.getPackageApplicationProvider().get().outputScope.getApkDatas().each { apkData ->
-                                            apk = new File(variant.getPackageApplicationProvider().get().outputs.files.last(), apkData.getOutputFileName())
-                                            println 'apk: ' + apk
-                                            if (nimbledroid.mappingUpload) {
-                                                mapping = variant.getMappingFile()
-                                            }
+                                        apk = getApk(variant)
+                                        if (nimbledroid.mappingUpload) {
+                                            mapping = variant.getMappingFile()
                                         }
                                     }
                                 }
@@ -156,12 +153,9 @@ class ProfilerPlugin implements Plugin<Project> {
                         } else if (project.hasProperty('android')) {
                             project.android.applicationVariants.all { variant ->
                                 if (variant.name == nimbledroid.variant) {
-                                    variant.getPackageApplicationProvider().get().outputScope.getApkDatas().each { apkData ->
-                                        apk = new File(variant.getPackageApplicationProvider().get().outputs.files.last(), apkData.getOutputFileName())
-                                        println 'apk: ' + apk
-                                        if (nimbledroid.mappingUpload) {
-                                            mapping = variant.getMappingFile()
-                                        }
+                                    apk = getApk(variant)
+                                    if (nimbledroid.mappingUpload) {
+                                        mapping = variant.getMappingFile()
                                     }
                                 }
                             }
@@ -459,5 +453,16 @@ class ProfilerPlugin implements Plugin<Project> {
             println "Running NimbleDroid Gradle Plugin v${nimbleVersion}, using service $service. For more info see $nimbledroid.server/help/ci"
             greetingLock = true
         }
+    }
+
+    File getApk(variant) {
+        File apk = null
+        variant.getPackageApplicationProvider().get().getVariantOutputs().get().each { variantOutput ->
+            String apkDirectory = variant.getPackageApplicationProvider().get().getOutputDirectory().get()
+            String apkFilename = variantOutput.getOutputFileName().get()
+            apk = new File(apkDirectory, apkFilename)
+            println 'apk: ' + apk
+        }
+        apk
     }
 }
