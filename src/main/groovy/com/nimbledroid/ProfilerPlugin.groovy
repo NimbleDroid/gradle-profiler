@@ -10,10 +10,12 @@ import static org.apache.http.entity.ContentType.TEXT_PLAIN
 import org.apache.http.entity.mime.MultipartEntity
 import org.apache.http.entity.mime.content.FileBody
 import org.apache.http.entity.mime.content.StringBody
+import org.gradle.api.file.FileCollection
+import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.StopActionException
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.tasks.StopActionException
 
 class ProfilerPluginExtension {
     long findApkTimeout = 0
@@ -56,7 +58,7 @@ class ProfilerPlugin implements Plugin<Project> {
         nimbledroid.extensions.create('appData', AppDataExtension)
 
         nimbleProperties = project.file("$project.rootDir/nimbledroid.properties")
-        nimbleVersion = '1.2.2'
+        nimbleVersion = '1.2.3'
 
         project.task('ndUpload') {
             doLast {
@@ -103,7 +105,9 @@ class ProfilerPlugin implements Plugin<Project> {
                                     if (variant.name == nimbledroid.variant) {
                                         apk = getApk(variant)
                                         if (nimbledroid.mappingUpload) {
-                                            mapping = variant.getMappingFile()
+                                            try {
+                                                mapping = variant.getMappingFileProvider().get().getSingleFile()
+                                            } catch (Exception e) {}
                                         }
                                     }
                                 }
@@ -155,7 +159,9 @@ class ProfilerPlugin implements Plugin<Project> {
                                 if (variant.name == nimbledroid.variant) {
                                     apk = getApk(variant)
                                     if (nimbledroid.mappingUpload) {
-                                        mapping = variant.getMappingFile()
+                                        try {
+                                            mapping = variant.getMappingFileProvider().get().getSingleFile()
+                                        } catch (Exception e) {}
                                     }
                                 }
                             }
