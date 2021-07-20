@@ -10,8 +10,6 @@ import static org.apache.http.entity.ContentType.TEXT_PLAIN
 import org.apache.http.entity.mime.MultipartEntity
 import org.apache.http.entity.mime.content.FileBody
 import org.apache.http.entity.mime.content.StringBody
-import org.gradle.api.file.FileCollection
-import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.StopActionException
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
